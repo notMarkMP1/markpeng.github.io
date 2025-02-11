@@ -32,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with: 
-          sparse-checkout: "for-tiffany"
+          sparse-checkout: for-tiffany
       - name: Detect package manager
         id: detect-package-manager
         run: |
