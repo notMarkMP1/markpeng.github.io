@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import Wrapped from '../components/Wrapped';
-import Survey from '../components/Survey';
+import Wrapped from '@/app/components/Wrapped';
+import Survey from '@/app/components/Survey';
 
 export default function Main() {
     const [clicked, setClicked] = useState(false);
@@ -56,12 +56,20 @@ export default function Main() {
                     good girlllllll LMFAOAOAOAO
                 </div>
             ) : (
-                <button
-                    className="bg-yellow-300 hover:bg-yellow-200 text-gray-800 py-2 px-4 rounded-md shadow"
-                    onClick={() => setClicked(true)}
-                >
-                    click me
-                </button>
+                <div>
+                    <button
+                        className="bg-yellow-300 hover:bg-yellow-200 text-gray-800 py-2 px-4 rounded-md shadow"
+                        onClick={() => setClicked(true)}
+                    >
+                        click me
+                    </button>
+                    <button
+                        className="bg-yellow-300 hover:bg-yellow-200 text-gray-800 py-2 px-4 rounded-md shadow"
+                        onClick={() => setUINumber(2)}
+                    >
+                        wrapped
+                    </button>
+                </div>
             )}
         </div>
     );

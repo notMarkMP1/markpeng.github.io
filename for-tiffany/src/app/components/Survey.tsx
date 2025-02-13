@@ -120,7 +120,7 @@ export default function Survey({ onClose }: SurveyProps) {
                             className="text-3xl bg-yellow-400 hover:bg-yellow-300 text-white py-1 px-6 rounded-md shadow"
                             onClick={() => setQuestionNumber(1)}
                         >
-                            i understand
+                            yes sir
                         </button>
                     </div>
                 </div>
@@ -132,7 +132,7 @@ export default function Survey({ onClose }: SurveyProps) {
         return (
             <div className="flex justify-center items-center h-screen relative">
                 <div className="text-6xl font-bold text-center">
-                    <div>do you love me</div>
+                    <div>FIRST QUESTION: do you love me</div>
                     <div className="flex flex-row justify-center mt-6 space-x-4">
                         <button
                             className="text-3xl bg-green-400 hover:bg-green-300 text-white py-1 px-6 w-32 rounded-md shadow"
@@ -169,7 +169,7 @@ export default function Survey({ onClose }: SurveyProps) {
         return (
             <div className="flex justify-center items-center h-screen">
                 <div className="text-6xl font-bold text-center">
-                    <div>am i a good valentines </div>
+                    <div>SECOND QUESTION: am i a good valentines </div>
                     <div className="flex flex-row justify-center mt-6 space-x-4">
                         <button
                             className="text-3xl bg-green-400 hover:bg-green-300 text-white py-1 px-6 rounded-md shadow"
@@ -178,7 +178,7 @@ export default function Survey({ onClose }: SurveyProps) {
                                 setNextQuestion(4);
                             }}
                         >
-                            yes
+                            yea
                         </button>
                         {(showButton && <button
                             className="text-3xl bg-red-500 hover:bg-red-400 text-white py-1 px-6 rounded-md shadow"
@@ -224,7 +224,7 @@ export default function Survey({ onClose }: SurveyProps) {
     return (
         <div className="flex justify-center items-center h-screen">
             <div className="text-6xl font-bold text-center ">
-                yupp factttssss thank you  
+                YUPPP factttssss thank you  
                 <div className="text-2xl mt-4">okay now that the ice is broken for real </div>
                 <div className="text-2xl mt-4"> thank you for being the best girlfriend in the whole world </div>
                 <div className="text-2xl mt-2">i love you SOOSOSOSO MUCH and you make me so happy through everything</div>
