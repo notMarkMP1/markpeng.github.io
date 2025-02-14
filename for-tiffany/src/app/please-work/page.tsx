@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Wrapped from '@/app/components/Wrapped';
 import Survey from '@/app/components/Survey';
+import PopQuiz from '../components/PopQuiz';
 
 export default function Main() {
     const [clicked, setClicked] = useState(false);
@@ -27,7 +28,7 @@ export default function Main() {
         }
     }, [faded]);
 
-    const handleCloseSurvey = () => {
+    const handleClose = () => {
         if (uiNumber <= 4) {
             setUINumber(uiNumber + 1);
         }
@@ -36,7 +37,7 @@ export default function Main() {
     if (uiNumber === 1) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <Survey onClose={handleCloseSurvey} />
+                <Survey onClose={handleClose} />
             </div>
         );
     }
@@ -44,10 +45,35 @@ export default function Main() {
     if (uiNumber === 2) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <Wrapped />
+                <Wrapped onClose={handleClose}/>
             </div>
         );
     }
+
+    if (uiNumber === 3){
+        return(
+            <div className="flex justify-center items-center h-screen">
+                <PopQuiz onClose={handleClose}/>
+            </div>
+        )
+    }
+
+    if(uiNumber === 4){
+        return(
+            <div className="flex justify-center items-center h-screen">
+                <div className="text-3xl font-bold text-center">
+                    thank you for finishing my website 
+                    <br/>
+                    HAPPY VALENTINES DAY!!!!! 
+                    <br/>
+                    overall, this project took around 5 days to complete, 20 hours, and 1500+ lines of code!! 
+                    <br/>
+                    i love you 💖💖💖
+                </div>
+            </div>
+        )
+    }
+
 
     return (
         <div className="flex justify-center items-center h-screen">
@@ -62,12 +88,6 @@ export default function Main() {
                         onClick={() => setClicked(true)}
                     >
                         click me
-                    </button>
-                    <button
-                        className="bg-yellow-300 hover:bg-yellow-200 text-gray-800 py-2 px-4 rounded-md shadow"
-                        onClick={() => setUINumber(2)}
-                    >
-                        wrapped
                     </button>
                 </div>
             )}

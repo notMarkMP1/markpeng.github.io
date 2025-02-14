@@ -26,10 +26,6 @@ export default function Survey({ onClose }: SurveyProps) {
 
     const FadeScreen = () => {
             const [fade, setFade] = useState(true);
-
-            
-
-
             useEffect(() => {
                 const fadeTimeout = setTimeout(() => setFade(false), 2000);
                 const nextQuestionTimeout = setTimeout(() => {

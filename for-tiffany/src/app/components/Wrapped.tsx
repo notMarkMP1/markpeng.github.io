@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import FadeIn from '@/app/components/FadeIn';
 
-export default function Wrapped() {
+interface WrappedProps {
+    onClose: () => void;
+}
+
+export default function Wrapped({onClose} : WrappedProps) {
     const [uiNumber, setUINumber] = useState(0);
 
     useEffect(() => {
@@ -149,7 +153,7 @@ export default function Wrapped() {
                 </FadeIn>
                 <FadeIn key="fadein-4-6" duration={1} delay={5.5}>
                     <h1 className="text-3xl font-bold text-center text-black-950">
-                        that happened to be our gc hangout day!! the "real" day we texted the least was
+                        that happened to be our gc hangout day!! the &quot;real&quot; day we texted the least was
                     </h1>
                 </FadeIn>
                 <FadeIn key="fadein-4-7" duration={1} delay={6.5}>    
@@ -225,7 +229,7 @@ export default function Wrapped() {
                         <h1 className="text-3xl font-bold text-center text-black-950">more fun facts!!</h1>
                     </FadeIn>
                     <FadeIn key="fadein-6-2" duration={1} delay={1.5}>
-                        <h1 className="text-3xl font-bold text-center text-black-950">the amount of "i love you", "i love u more", etc. messages sent since dating were</h1>
+                        <h1 className="text-3xl font-bold text-center text-black-950">the amount of &quot;i love you&quot;, &quot;i love u more&quot;, etc. messages sent since dating were</h1>
                     </FadeIn>
                     <FadeIn key="fadein-6-3" duration={1} delay={2.5}>
                         <p className="text-2xl font-bold text-center text-black-950">
@@ -233,7 +237,7 @@ export default function Wrapped() {
                         </p>
                     </FadeIn>
                     <FadeIn key="fadein-6-4" duration={1} delay={3.5}>
-                        <h1 className="text-3xl font-bold text-center text-black-950">the amount of "i miss u", etc. messages sent since dating were</h1>
+                        <h1 className="text-3xl font-bold text-center text-black-950">the amount of &quot;i miss u&quot;, etc. messages sent since dating were</h1>
                     </FadeIn>
                     <FadeIn key="fadein-6-5" duration={1} delay={4.5}>
                         <p className="text-2xl font-bold text-center text-black-950">
@@ -278,7 +282,7 @@ export default function Wrapped() {
                         </p>
                     </FadeIn>
                     <FadeIn key="fadein-7-4" duration={1} delay={3.5}>
-                        <h1 className="text-3xl font-bold text-center text-black-950">and our most common words were (ignoring common words like "i", "a", "and", etc.)</h1>
+                        <h1 className="text-3xl font-bold text-center text-black-950">and our most common words were (ignoring common words like &quot;i&quot;, &quot;a&quot;, &quot;and&quot;, etc.)</h1>
                     </FadeIn>
                     <FadeIn key="fadein-7-5" duration={1} delay={4.5}>
                         <textarea
@@ -353,10 +357,28 @@ export default function Wrapped() {
                             <button className="bg-green-600 hover:bg-green-400 text-gray-800 py-2 px-4 rounded-md shadow" onClick={() => setUINumber(8)}>next</button>
                         </div>
                     </FadeIn>
-
                 </div>
             )}
+            {uiNumber === 8 && (
+                <div className="justify-center items-center space-y-2">
+                    <FadeIn key="fadein-8-1" duration={1.5} delay={0}>
+                        <h1 className="text-3xl font-bold text-center text-black-950">i hope you enjoyed this!!</h1>
+                    </FadeIn>
+                    <FadeIn key="fadein-8-2" duration={1} delay={1.5}>
+                        <h1 className="text-3xl font-bold text-center text-black-950">in total, my datasets were about 5gb big!!</h1>
+                    </FadeIn>
+                    <FadeIn key="fadein-8-3" duration={1} delay={2.5}>
+                        <h1 className="text-3xl font-bold text-center text-black-950">maybe i should continue doing these every once in a while i dunno</h1>
+                    </FadeIn>
+                    <FadeIn key="fadein-8-4" duration={2} delay={3.5}>
+                        <div className="flex justify-center items-center space-x-4">
+                            <button className="bg-green-600 hover:bg-green-400 text-gray-800 py-2 px-4 rounded-md shadow" onClick={onClose}>wow mark you are such a cool fella and you are the best ever </button>
+                        </div>
+                    </FadeIn>
+                </div>
 
+
+            )}
         </div>
     );
 };
