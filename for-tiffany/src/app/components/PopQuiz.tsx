@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import FadeIn from '@/app/components/FadeIn';
-import { isFloat64Array } from "node:util/types";
 
 interface PopQuizProps {
     onClose: () => void;
@@ -11,7 +10,6 @@ export default function PopQuiz({ onClose }: PopQuizProps) {
     const [correctAnswers, setCorrectAnswers] = useState(0);
     const [message, setMessage] = useState(false);
     const [wasCorrect, setWasCorrect] = useState(false);
-    const [purchases, setPurchases] = useState([0, 0, 0, 0])
 
     function nextQuestion(){
         setQuestionNumber(questionNumber + 1);
@@ -42,33 +40,6 @@ export default function PopQuiz({ onClose }: PopQuizProps) {
             setCorrectAnswers(correctAnswers - 2);
             setQuestionNumber(11);
             setMessage(false);
-        }
-    }
-
-    function handlePurchase(number: number){
-        if (number === 0){
-            if (correctAnswers >= 2){
-                setPurchases(prev => [prev[0] + 1, prev[1], prev[2], prev[3]]);
-                setCorrectAnswers(correctAnswers - 2);
-            }
-        }
-        if (number === 1){
-            if (correctAnswers >= 3){
-                setPurchases(prev => [prev[0], prev[1] + 1, prev[2], prev[3]]);
-                setCorrectAnswers(correctAnswers - 3);
-            }
-        }
-        if (number === 2){
-            if (correctAnswers >= 4){
-                setPurchases(prev => [prev[0], prev[1], prev[2] + 1, prev[3]]);
-                setCorrectAnswers(correctAnswers - 4);
-            }
-        }
-        if (number === 3){
-            if (correctAnswers >= 5){
-                setPurchases(prev => [prev[0], prev[1], prev[2], prev[3] + 1]);
-                setCorrectAnswers(correctAnswers - 5);
-            }
         }
     }
 
