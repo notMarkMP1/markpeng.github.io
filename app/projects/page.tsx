@@ -1,6 +1,6 @@
 import FadeInSection from "@/app/components/FadeInSection";
 
-export default function Home() {
+export default function Projects() {
   return (
     <>
       <FadeInSection delay={0.2}>

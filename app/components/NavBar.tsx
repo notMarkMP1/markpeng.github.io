@@ -31,7 +31,7 @@ export default function NavBar() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    transition={{ type: "easeInOut"}}
+                                    transition={{ type: "spring", velocity: 2, bounce: 0.2 }}
                                 />
                             )}
                         </Link>
