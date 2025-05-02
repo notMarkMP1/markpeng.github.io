@@ -6,7 +6,7 @@ export default function Contact() {
       <FadeInSection>
         <h1 className="text-3xl font-bold">Contact</h1>
       </FadeInSection>
-      <FadeInSection>
+      <FadeInSection delay={0.2}>
         <p className="text-lg">markminpeng [at] gmail [dot] com</p>
       </FadeInSection>
     </div>
