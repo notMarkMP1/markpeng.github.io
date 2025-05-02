@@ -23,7 +23,7 @@ export default function RootLayout({
           <NavBar />
         </header>
         <main>
-          <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
+          <div>
             {children}
           </div>
         </main>
