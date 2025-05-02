@@ -8,7 +8,7 @@ export default function about() {
           <h1 className="text-4xl font-bold">About (WIP)</h1>
         </FadeInSection>
         <FadeInSection delay={0.2}>
-          <h1 className="text-lg">learn about my developer history</h1>
+          <p className="text-lg">learn about my developer history</p>
         </FadeInSection>
       </div>
     </div>

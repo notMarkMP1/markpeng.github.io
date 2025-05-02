@@ -7,7 +7,7 @@ export default function Contact() {
         <h1 className="text-3xl font-bold">Contact</h1>
       </FadeInSection>
       <FadeInSection>
-        <h1 className="text-lg">markminpeng [at] gmail [dot] com</h1>
+        <p className="text-lg">markminpeng [at] gmail [dot] com</p>
       </FadeInSection>
     </div>
   );

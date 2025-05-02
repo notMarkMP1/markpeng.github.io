@@ -8,9 +8,9 @@ export default function Home() {
         <h1 className="text-6xl text-center font-bold">hello, i&apos;m Mark Peng!</h1>
       </FadeInSection>
       <FadeInSection delay={0.2}>
-        <h1 className="text-lg text-center mx-4">
+        <p className="text-lg text-center mx-4">
           An aspiring software engineer and current student at the University of Toronto studying computer science.
-        </h1>
+        </p>
       </FadeInSection>
       <div className="flex flex-row items-center justify-center space-x-4">
         <FadeInSection delay={0.4}>
