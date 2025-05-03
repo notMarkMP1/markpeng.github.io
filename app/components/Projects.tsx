@@ -30,7 +30,9 @@ export default function Projects({items}: ProjectProps){
         "MongoDB": "bg-green-500",
         "AWS": "bg-orange-500",
         "Python": "bg-blue-900",
-        "OAuth2.0": "bg-zinc-700"
+        "OAuth2.0": "bg-zinc-700",
+        "Java": "bg-yellow-800",
+        "WPILib": "bg-red-700"
     }
 
     const colorClasses = [
