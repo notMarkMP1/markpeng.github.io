@@ -1,5 +1,6 @@
 import FadeInSection from "@/app/components/FadeInSection";
 import Timeline from "@/app/components/Timeline";
+import Projects from "../components/Projects";
 
 
 export default function About() {
@@ -27,8 +28,23 @@ export default function About() {
       link: "https://tmun.ca"
     }
   ];
-  // placeholders for now
 
+  const projectItems = [
+    {
+      title: "Project 1",
+      description: "Description of project 1",
+      technologies: ["React", "Node.js"],
+      link: "https://github.com/notMarkMP1",
+      imagePath: "/images/project1.jpg"
+    },
+    {
+      title: "Project 2",
+      description: "Description of project 2",
+      technologies: ["Next.js", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS"],
+      link: "https://github.com/notMarkMP1",
+      imagePath: "/images/project1.jpg"
+    }
+  ]
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
@@ -49,7 +65,7 @@ export default function About() {
           <h2 className="text-2xl font-semibold">Projects</h2>
         </FadeInSection>
         <FadeInSection delay={1.0}>
-          <p className="text-lg">to be added...</p>
+          <Projects items={projectItems} />
         </FadeInSection>
       </div>
     </div>
