@@ -57,6 +57,13 @@ export default function About() {
       technologies: ["Arduino", "C/C++"],
       link: "https://github.com/notMarkMP1/DIYPumpItUp",
       imagePath: "/images/diypumpitup.png"
+    },
+    {
+      title: "FRC 2023-24 Robot Code",
+      description: "The robot code for the 2023 and 2024 FRC Seasons. Lead controls developer for 2023 and team captain for 2024.",
+      technologies: ["Java", "WPILib", "Gradle"],
+      link: "https://github.com/Team4308/CU-2023",
+      imagePath: "/images/frc2023.png"
     }
   ]
 
