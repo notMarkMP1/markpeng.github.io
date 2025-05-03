@@ -31,18 +31,32 @@ export default function About() {
 
   const projectItems = [
     {
-      title: "Project 1",
-      description: "Description of project 1",
-      technologies: ["React", "Node.js"],
-      link: "https://github.com/notMarkMP1",
-      imagePath: "/images/project1.jpg"
+      title: "Personal Website",
+      description: "A quick overview of my projects and experience.",
+      technologies: ["React", "Next.js", "Tailwind CSS", "TypeScript"],
+      link: "https://github.com/notMarkMP1/markpeng.github.io",
+      imagePath: "/images/personal_site.png"
     },
     {
-      title: "Project 2",
-      description: "Description of project 2",
-      technologies: ["Next.js", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS", "Tailwind CSS"],
-      link: "https://github.com/notMarkMP1",
-      imagePath: "/images/project1.jpg"
+      title: "AutoClipUpload",
+      description: "Personal utility to automatically upload clips from a game to YouTube.",
+      technologies: ["Python", "Google Cloud", "OAuth2.0"],
+      link: "https://github.com/notMarkMP1/AutoClipUpload",
+      imagePath: "/images/autoclipupload.png",
+    },
+    {
+      title: "ProportionAI",
+      description: "A hackathon webapp that uses time and AI to read and influence your study habits.",
+      technologies: ["React", "Next.js", "Tailwind CSS", "MongoDB", "Node.js", "Terraform", "AWS"],
+      link: "https://github.com/enxilium/proportion",
+      imagePath: "/images/proportionai.png"
+    },
+    {
+      title: "DIY Pump it Up",
+      description: "A DIY engineering project to play arcade game Pump it Up at home. Saved 40 dollars hacking an Arduino.",
+      technologies: ["Arduino", "C/C++"],
+      link: "https://github.com/notMarkMP1/DIYPumpItUp",
+      imagePath: "/images/diypumpitup.png"
     }
   ]
 

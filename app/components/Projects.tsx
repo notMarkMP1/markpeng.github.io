@@ -26,7 +26,11 @@ export default function Projects({items}: ProjectProps){
         "Tailwind CSS": "bg-cyan-700",
         "JavaScript": "bg-yellow-700",
         "TypeScript": "bg-blue-700",
-        "Python": "bg-indigo-700",
+        "Terraform": "bg-indigo-700",
+        "MongoDB": "bg-green-500",
+        "AWS": "bg-orange-500",
+        "Python": "bg-blue-900",
+        "OAuth2.0": "bg-zinc-700"
     }
 
     const colorClasses = [
