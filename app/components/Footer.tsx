@@ -14,7 +14,7 @@ export default function Footer() {
 
     return (
         <footer className="w-full flex flex-col items-center mt-auto py-4">
-            <div className="max-w-lg w-full mx-auto px-2 py-0.5 sm:px-6 bg-white/10 backdrop-blur-sm rounded-md mb-4"></div>
+            <div className="max-w-lg w-4/5 mx-auto px-2 py-0.5 sm:px-6 bg-white/10 backdrop-blur-sm rounded-md mb-4"></div>
             <div className="flex gap-3">
                 <motion.a 
                     href="https://github.com/notMarkMP1/markpeng.github.io"
