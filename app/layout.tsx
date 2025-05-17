@@ -22,7 +22,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
-        <header className="w-full backdrop-blur-sm">
+        <header className="w-full">
           <NavBar />
         </header>
         <main className="flex-grow flex flex-col">
