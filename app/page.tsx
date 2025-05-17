@@ -1,5 +1,5 @@
 'use client';
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber';
 import WaterShader from '@/app/components/WaterShader';
 import FadeInSection from '@/app/components/FadeInSection';
