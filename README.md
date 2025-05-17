@@ -22,7 +22,7 @@ almost all of the code is of mine, except for the GLSL shaders which are an adap
 ## The Shader
 The hero shader was by far the most complex thing on the website and took a while to implement with little to no documentation, so let's talk about how it happened!
 
-I was first introduced to this shader and effect from this [youtube tutorial](https://www.youtube.com/watch?v=DncmUVn1Yfg), and quickly decided I wanted to implement a similar thing. Given that this tutorial was using raw three.js and javascript as a whole, I figured that the act of translating it into react would be a fun little weekend exercise, but it was not the case. If you compare to the code from the tutorial to the code found in the repo, there are major differences in its implementation.
+I was first introduced to this shader and effect from this [youtube tutorial](https://www.youtube.com/watch?v=DncmUVn1Yfg), and quickly decided I wanted to implement a similar thing. Given that this tutorial was using raw three.js and javascript as a whole, I figured that the act of translating it into react would be a fun little weekend exercise, but it was not the case, and multiple attempts of replication failed. Ultimately, I gave up, and by the end, if you compare to the code from the tutorial to the code found in the repository, there are major differences in implementation.
 
 However, the tutorial did give me a good starting base to go off of, demonstrating how the shader could be implemented ontop of a canvas texture and use a buffer ping-pong texture style shader to create the illusionary effect, which is something I decided to work towards.
 
