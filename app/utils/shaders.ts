@@ -11,9 +11,11 @@ export const simMaterialFragmentShader = `
     uniform vec4 iMouse;
     uniform vec2 iResolution;
     uniform sampler2D iChannel0; // our input texture
+    uniform float delta;
+    uniform float iPressure;
     varying vec2 vUv;
 
-    const float delta = 1.3;
+    //const float delta = 1.3;
 
     void main() {
         // Convert vUv to fragCoord (pixel coordinates)
@@ -61,13 +63,13 @@ export const simMaterialFragmentShader = `
             pVel *= 1.0 - 0.002 * delta;
             
             // Pressure damping
-            pressure *= 0.999;
+            pressure *= iPressure;
             
             // Output: x = pressure, y = pressure velocity, z/w = x/y gradients
             fragColor = vec4(pressure, pVel, (p_right - p_left) / 2.0, (p_up - p_down) / 2.0);
             
             // Mouse interaction
-            if (iMouse.z < 1.0) {
+            if (iMouse.z == 1.0) {
                 float dist = distance(fragCoord, iMouse.xy);
                 if (dist <= 20.0) {
                     fragColor.x += 1.0 - dist / 20.0;

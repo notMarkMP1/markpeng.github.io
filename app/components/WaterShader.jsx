@@ -10,15 +10,15 @@ import {
     renderMaterialFragmentShader
 } from '@/app/utils/shaders';
 
-export default function WaterShader(props, ref) {
+
+export default function WaterShader({ depth, pressure, hideUI }, ref) {
     // scene found on page.tsx
-    
     /*
     SETUP
     */
     const { viewport, size, gl } = useThree();
-    
     const [mouse, setMouse] = useState({ x: 0, y: 0, z: 0, w: 0 });
+    const [toggleShader, setToggleShader] = useState(true); 
     const frameCount = useRef(0);
     const [dimensions, setDimensions] = useState([size.width, size.height]);
     const dimensionsRef = useRef(dimensions);
@@ -83,7 +83,9 @@ export default function WaterShader(props, ref) {
             iFrame: { value: 0 },
             iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
             iResolution: { value: new THREE.Vector2(dimensions[0], dimensions[1]) },
-            iChannel0: { value: null }
+            iChannel0: { value: null },
+            delta: { value: depth },
+            iPressure: { value: pressure },
         }
     }));
     
@@ -142,7 +144,13 @@ export default function WaterShader(props, ref) {
             const [w, h] = dimensionsRef.current;
             const x = (e.clientX / window.innerWidth) * w;
             const y = ((window.innerHeight - e.clientY) / window.innerHeight) * h;
-            setMouse({ x, y, z: e.buttons > 0 ? 2 : 0, w: 0 });
+            if (e.type === 'mousedown' && !hideUI){
+                setToggleShader(!toggleShader);
+            }
+            if (hideUI) {
+                setToggleShader(true);
+            }
+            setMouse({ x, y, z: toggleShader, w: 0 });
         }
         window.addEventListener('mousemove', handlePointer);
         window.addEventListener('mousedown', handlePointer);
@@ -152,7 +160,7 @@ export default function WaterShader(props, ref) {
             window.removeEventListener('mousedown', handlePointer);
             window.removeEventListener('mouseup', handlePointer);
         };
-    }, []);
+    }, [toggleShader, hideUI]);
     
     // buffer swap state
     const bufferState = useRef({ src: fboA, dst: fboB });
@@ -172,7 +180,8 @@ export default function WaterShader(props, ref) {
         simMaterial.uniforms.iFrame.value = frameCount.current;
         simMaterial.uniforms.iMouse.value.set(mouse.x, mouse.y, mouse.z, mouse.w);
         simMaterial.uniforms.iChannel0.value = src.texture;
-        
+        simMaterial.uniforms.delta.value = depth;
+        simMaterial.uniforms.iPressure.value = pressure;
         // run simulation step in offscreen scene
         gl.setRenderTarget(dst);
         gl.render(simScene, simCameraRef.current);
