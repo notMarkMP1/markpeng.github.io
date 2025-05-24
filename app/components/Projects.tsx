@@ -20,18 +20,19 @@ export default function Projects({items}: ProjectProps){
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
     const colorDictionary: { [key: string]: string } = {
-        "React": "bg-blue-500",
-        "Node.js": "bg-green-700",
-        "Next.js": "bg-zinc-900",
-        "Tailwind CSS": "bg-cyan-700",
-        "JavaScript": "bg-yellow-700",
-        "TypeScript": "bg-blue-700",
-        "Terraform": "bg-indigo-700",
-        "MongoDB": "bg-green-500",
         "AWS": "bg-orange-500",
-        "Python": "bg-blue-900",
-        "OAuth2.0": "bg-zinc-700",
         "Java": "bg-yellow-800",
+        "JavaScript": "bg-yellow-700",
+        "MongoDB": "bg-green-500",
+        "Next.js": "bg-zinc-900",
+        "Node.js": "bg-green-700",
+        "OAuth2.0": "bg-zinc-700",
+        "Python": "bg-blue-900",
+        "React": "bg-blue-500",
+        "Tailwind CSS": "bg-cyan-700",
+        "Terraform": "bg-indigo-700",
+        "Three.js": "bg-zinc-500",
+        "TypeScript": "bg-blue-700",
         "WPILib": "bg-red-700"
     }
 

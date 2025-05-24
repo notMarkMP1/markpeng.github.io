@@ -33,7 +33,7 @@ export default function About() {
     {
       title: "Personal Website",
       description: "A quick overview of my projects and experience.",
-      technologies: ["React", "Next.js", "Tailwind CSS", "TypeScript"],
+      technologies: ["React", "Next.js", "Tailwind CSS", "TypeScript", "Three.js"],
       link: "https://github.com/notMarkMP1/markpeng.github.io",
       imagePath: "/images/personal_site.png"
     },
