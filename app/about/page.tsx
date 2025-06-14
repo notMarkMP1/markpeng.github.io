@@ -1,7 +1,8 @@
+'use client';
+
 import FadeInSection from "@/app/components/FadeInSection";
 import Timeline from "@/app/components/Timeline";
 import Projects from "../components/Projects";
-
 
 export default function About() {
 
@@ -58,17 +59,50 @@ export default function About() {
       link: "https://github.com/notMarkMP1/DIYPumpItUp",
       imagePath: "/images/diypumpitup.png"
     },
-    {
-      title: "FRC 2023-24 Robot Code",
+    {    title: "FRC 2023-24 Robot Code",
       description: "The robot code for the 2023 and 2024 FRC seasons. Lead controls developer for 2023 and team captain for 2024.",
       technologies: ["Java", "WPILib", "Gradle"],
       link: "https://github.com/Team4308/CU-2023",
       imagePath: "/images/frc2023.png"
     }
-  ]
+  ];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
+    <style jsx global>{`
+        html {
+          margin-right: calc(-1 * (100vw - 100%));
+          overflow-x: hidden;
+        }
+        
+        body {
+          overflow-x: hidden;
+        }
+        
+        ::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: rgba(136, 136, 136, 0.4);
+          border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: rgba(136, 136, 136, 0.6);
+        }
+        
+        /* Firefox */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(136, 136, 136, 0.4) transparent;
+        }
+      `}</style>
       <div className="flex flex-col justify-center space-y-4">
         <FadeInSection>
           <h1 className="text-4xl font-bold">About</h1>
