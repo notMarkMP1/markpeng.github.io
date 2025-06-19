@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   description: "my personal website playground",
 }
 
+const jsonLD = {
+    "@context": "https://schema.org/",
+    "@type": "Person",
+    "name": "Mark Peng",
+    "alternateName": "Mark P.",
+    "url": "https://markpeng.me",
+    "image": "",
+    "sameAs": [
+      "https://linkedin.com/in/markminpeng",
+      "https://github.com/notMarkMP1"
+    ],
+    "jobTitle": "Software Engineer"  
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,6 +34,12 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLD).replace(/</g, '\\u003c'),
+        }}
+      />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <header className="w-full">
