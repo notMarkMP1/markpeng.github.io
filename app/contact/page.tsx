@@ -1,5 +1,9 @@
 import FadeInSection from "@/app/components/FadeInSection";
 
+export const metadata = {
+  title: "Contact"
+};
+
 export default function Contact() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">

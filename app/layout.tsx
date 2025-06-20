@@ -7,8 +7,14 @@ import Footer from "./components/Footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Mark Peng",
+  title: {
+    default: "Mark Peng",
+    template: "%s | Mark Peng",
+  },
   description: "my personal website playground",
+  icons: {
+    icon: "/favicon.ico",
+  }
 }
 
 const jsonLD = {
@@ -39,7 +45,7 @@ export default function RootLayout({
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLD).replace(/</g, '\\u003c'),
         }}
-      />
+        />
       </head>
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <header className="w-full">
