@@ -1,0 +1,57 @@
+import path from 'path';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import { MDXRemote } from 'next-mdx-remote/rsc';
+import { notFound } from 'next/navigation';
+
+import { getMDXData } from "@/app/utils/mdxUtils";
+import { formatDate, isSameDay } from "@/app/utils/dateUtils";
+import { blogComponents } from "@/app/utils/componentLoader";
+
+const components = {
+    ...blogComponents,
+}
+
+export async function generateStaticParams() {
+    const posts = getMDXData(path.join('app', 'blog', 'posts'));
+    return posts.map(post => ({
+        slug: post.metadata.slug
+    }))
+}
+
+export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }){
+    const { slug } = await params;
+    const post = getMDXData(path.join('app', 'blog', 'posts')).find(p => p.metadata.slug === slug);
+    if (!post) {
+        notFound();
+    }
+    const shouldShowLastModified = !isSameDay(post.metadata.publishedAt, post.metadata.lastModifiedAt);
+    return (
+        <div className="container max-w-2xl mx-auto px-4 py-4 sm:px-6">
+            <h1 className="text-3xl font-bold">{post.metadata.title}</h1>
+            <div className="text-gray-600 flex flex-row row-1 justify-between items-center">
+                <p>
+                    Published on {formatDate(post.metadata.publishedAt)}
+                </p>
+                {shouldShowLastModified && (
+                    <p>
+                        Last modified on {formatDate(post.metadata.lastModifiedAt)}
+                    </p>
+                )}
+            </div>
+            <p className="text-gray-600 mb-6">{post.metadata.description}</p>
+            <div className="prose prose-lg max-w-none prose-invert">
+                <MDXRemote 
+                    source={post.content}
+                    components={components}
+                    options={{
+                        mdxOptions: {
+                            remarkPlugins: [remarkGfm],
+                            rehypePlugins: [rehypeHighlight],
+                        }
+                    }}
+                />
+            </div>
+        </div>
+    );
+}
