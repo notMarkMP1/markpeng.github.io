@@ -3,13 +3,11 @@ import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
-  turbopack: {
-    rules: {
-      '*.mdx': {
-        loaders: ['@mdx-js/loader'],
-        as: '*.jsx',
-      },
-    },
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.cache = false;
+    }
+    return config;
   },
 };
 
