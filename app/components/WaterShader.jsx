@@ -2,7 +2,19 @@
 import React, { useRef, useState, useEffect, forwardRef } from 'react';
 import { useThree, useFrame, createPortal } from '@react-three/fiber';
 import { OrthographicCamera, useFBO } from '@react-three/drei';
-import * as THREE from 'three';
+import { 
+    Scene, 
+    ShaderMaterial, 
+    Vector4, 
+    Vector2, 
+    Mesh, 
+    PlaneGeometry,
+    CanvasTexture,
+    NearestFilter,
+    RGBAFormat,
+    FloatType
+} from 'three';
+
 import {
     simMaterialVertexShader,
     simMaterialFragmentShader,
@@ -39,7 +51,7 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(displayText, width / 2, height / 2);
-        const texture = new THREE.CanvasTexture(canvas);
+        const texture = new CanvasTexture(canvas);
         texture.needsUpdate = true;
         return { canvas, texture };
     }
@@ -54,35 +66,35 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
     
     // ping-pong FBOs
     const fboA = useFBO(dimensions[0], dimensions[1], {
-        minFilter: THREE.NearestFilter,
-        magFilter: THREE.NearestFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.FloatType,
+        minFilter: NearestFilter,
+        magFilter: NearestFilter,
+        format: RGBAFormat,
+        type: FloatType,
         stencilBuffer: false,
         depthBuffer: false
     });
     const fboB = useFBO(dimensions[0], dimensions[1], {
-        minFilter: THREE.NearestFilter,
-        magFilter: THREE.NearestFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.FloatType,
+        minFilter: NearestFilter,
+        magFilter: NearestFilter,
+        format: RGBAFormat,
+        type: FloatType,
         stencilBuffer: false,
         depthBuffer: false
     });
     
     // simulated scene
-    const [simScene] = useState(() => new THREE.Scene());
+    const [simScene] = useState(() => new Scene());
     const simCameraRef = useRef();
     const simMeshRef = useRef();
     
     // simulation material
-    const [simMaterial] = useState(() => new THREE.ShaderMaterial({
+    const [simMaterial] = useState(() => new ShaderMaterial({
         vertexShader: simMaterialVertexShader,
         fragmentShader: simMaterialFragmentShader,
         uniforms: {
             iFrame: { value: 0 },
-            iMouse: { value: new THREE.Vector4(0, 0, 0, 0) },
-            iResolution: { value: new THREE.Vector2(dimensions[0], dimensions[1]) },
+            iMouse: { value: new Vector4(0, 0, 0, 0) },
+            iResolution: { value: new Vector2(dimensions[0], dimensions[1]) },
             iChannel0: { value: null },
             delta: { value: depth },
             iPressure: { value: pressure },
@@ -90,7 +102,7 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
     }));
     
     // rendered material
-    const [renderMaterial] = useState(() => new THREE.ShaderMaterial({
+    const [renderMaterial] = useState(() => new ShaderMaterial({
         vertexShader: renderMaterialVertexShader,
         fragmentShader: renderMaterialFragmentShader,
         uniforms: {
@@ -103,8 +115,8 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
     // add sim mesh to simScene
     useEffect(() => {
         if (!simMeshRef.current) {
-            const mesh = new THREE.Mesh(
-                new THREE.PlaneGeometry(2, 2),
+            const mesh = new Mesh(
+                new PlaneGeometry(2, 2),
                 simMaterial
             );
             simScene.add(mesh);
