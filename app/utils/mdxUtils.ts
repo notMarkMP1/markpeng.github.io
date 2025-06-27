@@ -50,8 +50,8 @@ function parseMDXFile(content: string, lastModified: Date): MDXPost {
     const slugMatch = frontmatterContent.match(/slug:\s*["'](.+?)["']/);
     const imageMatch = frontmatterContent.match(/image:\s*["'](.+?)["']/);
     
-    if (!titleMatch || !descriptionMatch || !publishedAtMatch || !slugMatch) {
-        throw new Error('Missing required frontmatter fields (title, description, publishedAt, slug)');
+    if (!titleMatch || !publishedAtMatch || !slugMatch) {
+        throw new Error('Missing required frontmatter fields (title, publishedAt, slug)');
     }
     
     // handle slug -- ensure it is a valid URL slug
@@ -59,7 +59,7 @@ function parseMDXFile(content: string, lastModified: Date): MDXPost {
 
     const metadata: Metadata = {
         title: titleMatch[1],
-        description: descriptionMatch[1],
+        description: descriptionMatch ? descriptionMatch[1] : '',
         publishedAt: publishedAtMatch[1],
         lastModifiedAt: lastModified.toISOString(),
         slug: slug,

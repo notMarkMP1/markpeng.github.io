@@ -3,6 +3,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 
 import { getMDXData } from "@/app/utils/mdxUtils";
 import { formatDate, isSameDay } from "@/app/utils/dateUtils";
@@ -28,7 +29,15 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
     const shouldShowLastModified = !isSameDay(post.metadata.publishedAt, post.metadata.lastModifiedAt);
     return (
         <div className="container max-w-2xl mx-auto px-4 py-4 sm:px-6">
-            <h1 className="text-3xl font-bold">{post.metadata.title}</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold">{post.metadata.title}</h1>
+                <Link 
+                    href="/blog" 
+                    className="text-gray-400 hover:text-gray-200 transition-colors duration-200 flex items-center gap-1"
+                >
+                    <span className="underline">← go back to blog</span>
+                </Link>
+            </div>
             <div className="text-gray-600 flex flex-row row-1 justify-between items-center">
                 <p>
                     Published on {formatDate(post.metadata.publishedAt)}
@@ -39,7 +48,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                     </p>
                 )}
             </div>
-            <p className="text-gray-600 mb-6">{post.metadata.description}</p>
+            <p className="text-gray-600 mb-4">{post.metadata.description}</p>
             <div className="prose prose-lg max-w-none prose-invert">
                 <MDXRemote 
                     source={post.content}
