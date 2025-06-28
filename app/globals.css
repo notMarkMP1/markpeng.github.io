@@ -26,3 +26,10 @@ body {
   font-size: 0.875rem !important;
   line-height: 1.5 !important;
 }
+
+/* Blog-specific paragraph styles */
+.prose p {
+  font-size: 1.1rem !important;
+  margin-top: 0.6rem !important;
+  margin-bottom: 0.6rem !important;
+}

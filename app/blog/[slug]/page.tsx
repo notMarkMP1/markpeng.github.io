@@ -35,10 +35,11 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                     href="/blog" 
                     className="text-gray-400 hover:text-gray-200 transition-colors duration-200 flex items-center gap-1"
                 >
-                    <span className="underline">← go back to blog</span>
+                    <span className="underline">← go back</span>
                 </Link>
             </div>
-            <div className="text-gray-600 flex flex-row row-1 justify-between items-center">
+            <p className="text-gray-400 text-md mb-0.5">{post.metadata.description}</p>
+            <div className="text-gray-600 flex flex-row row-1 justify-between items-center mb-4">
                 <p>
                     Published on {formatDate(post.metadata.publishedAt)}
                 </p>
@@ -48,7 +49,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                     </p>
                 )}
             </div>
-            <p className="text-gray-600 mb-4">{post.metadata.description}</p>
+            <hr className="border-gray-600 mb-4" />
             <div className="prose prose-lg max-w-none prose-invert">
                 <MDXRemote 
                     source={post.content}

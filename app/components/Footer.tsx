@@ -27,7 +27,7 @@ export default function Footer() {
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     className="relative group"
                 >
-                    <Image src="./code.svg" alt="Source Code" width={26} height={26}/>
+                    <Image src="/code.svg" alt="Source Code" width={26} height={26}/>
                     <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                         view source code
                     </span>
@@ -45,7 +45,7 @@ export default function Footer() {
                     className="relative group"
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                    <Image src="./linkedin.svg" alt="LinkedIn" width={24} height={24}/>
+                    <Image src="/linkedin.svg" alt="LinkedIn" width={24} height={24}/>
                     <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                         view my linkedin
                     </span>
@@ -61,7 +61,7 @@ export default function Footer() {
                     className="relative group"
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                    <Image src="./github.svg" alt="GitHub" width={24} height={24}/>
+                    <Image src="/github.svg" alt="GitHub" width={24} height={24}/>
                     <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-zinc-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                         view my github
                     </span>
