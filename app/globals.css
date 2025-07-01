@@ -2,9 +2,38 @@
 @plugin '@tailwindcss/typography';
 @import 'highlight.js/styles/github-dark-dimmed.min.css';
 
+html {
+  margin-right: calc(-1 * (100vw - 100%));
+  overflow-x: hidden;
+}
+
 body {
-  background-color: #0c0c0c; /* your background color */
-  color: #ffffff;            /* your default text color */
+  background-color: #0c0c0c;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(136, 136, 136, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(136, 136, 136, 0.6);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(136, 136, 136, 0.4) transparent;
 }
 
 .prose pre {
@@ -27,9 +56,31 @@ body {
   line-height: 1.5 !important;
 }
 
-/* Blog-specific paragraph styles */
 .prose p {
-  font-size: 1.1rem !important;
+  font-size: 1rem !important;
+  margin-top: 0.55rem !important;
+  margin-bottom: 0.55rem !important;
+}
+
+.prose h2 {
+  margin-top: 0.65rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.prose h3 {
   margin-top: 0.6rem !important;
   margin-bottom: 0.6rem !important;
+}
+
+.prose blockquote {
+  font-style: normal !important;
+  font-weight: normal !important;
+  quotes: none !important;
+  margin-bottom: 0.8rem !important;
+  margin-top: 0.8rem !important;
+}
+
+.prose blockquote::before,
+.prose blockquote::after {
+  content: none !important;
 }

@@ -39,7 +39,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                 </Link>
             </div>
             <p className="text-gray-400 text-md mb-0.5">{post.metadata.description}</p>
-            <div className="text-gray-600 flex flex-row row-1 justify-between items-center mb-4">
+            <div className="text-gray-600 flex flex-row row-1 justify-between items-center mb-2">
                 <p>
                     Published on {formatDate(post.metadata.publishedAt)}
                 </p>
@@ -49,7 +49,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
                     </p>
                 )}
             </div>
-            <hr className="border-gray-600 mb-4" />
+            <hr className="border-gray-600 mb-2" />
             <div className="prose prose-lg max-w-none prose-invert">
                 <MDXRemote 
                     source={post.content}

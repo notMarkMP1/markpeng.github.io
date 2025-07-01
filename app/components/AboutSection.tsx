@@ -69,41 +69,6 @@ export default function AboutSection() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
-    <style jsx global>{`
-        html {
-          margin-right: calc(-1 * (100vw - 100%));
-          overflow-x: hidden;
-        }
-        
-        body {
-          overflow-x: hidden;
-        }
-        
-        ::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: rgba(136, 136, 136, 0.4);
-          border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(136, 136, 136, 0.6);
-        }
-        
-        /* Firefox */
-        * {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(136, 136, 136, 0.4) transparent;
-        }
-      `}
-      </style>
       <div className="flex flex-col justify-center space-y-4">
         <FadeInSection>
           <h1 className="text-4xl font-bold">About</h1>
