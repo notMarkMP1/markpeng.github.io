@@ -24,14 +24,13 @@ export function getMDXData(dir: string): MDXPost[] {
     for (const file of files) {
         const filePath = path.join(postDir, file);
         const rawContent = fs.readFileSync(filePath, 'utf-8');
-        const stats = fs.statSync(filePath);
-        posts.push(parseMDXFile(rawContent, stats.mtime));
+        posts.push(parseMDXFile(rawContent));
     }
     
     return posts;
 }
 
-function parseMDXFile(content: string, lastModified: Date): MDXPost {
+function parseMDXFile(content: string): MDXPost {
     // regex for frontmatter: "---\nkey: value\n---"
     const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---/;
     const match = content.match(frontmatterRegex);
@@ -47,6 +46,7 @@ function parseMDXFile(content: string, lastModified: Date): MDXPost {
     const titleMatch = frontmatterContent.match(/title:\s*["'](.+?)["']/);
     const descriptionMatch = frontmatterContent.match(/description:\s*["'](.+?)["']/);
     const publishedAtMatch = frontmatterContent.match(/publishedAt:\s*["'](.+?)["']/);
+    const lastModifiedAtMatch = frontmatterContent.match(/lastModifiedAt:\s*["'](.+?)["']/);
     const slugMatch = frontmatterContent.match(/slug:\s*["'](.+?)["']/);
     const imageMatch = frontmatterContent.match(/image:\s*["'](.+?)["']/);
     
@@ -61,7 +61,7 @@ function parseMDXFile(content: string, lastModified: Date): MDXPost {
         title: titleMatch[1],
         description: descriptionMatch ? descriptionMatch[1] : '',
         publishedAt: publishedAtMatch[1],
-        lastModifiedAt: lastModified.toISOString(),
+        lastModifiedAt: lastModifiedAtMatch ? lastModifiedAtMatch[1] : '',
         slug: slug,
         image: imageMatch ? imageMatch[1] : undefined,
     };
