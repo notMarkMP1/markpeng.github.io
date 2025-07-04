@@ -5,6 +5,11 @@ import FadeInSection from '@/app/components/FadeInSection';
 import { getMDXData } from '@/app/utils/mdxUtils';
 import { formatDate, dateCompare } from '@/app/utils/dateUtils';
 
+export const metadata = {
+  title: "Blog",
+};
+
+
 export default function BlogHome(){
     const posts = getMDXData(path.join('app', 'blog', 'posts'));
     posts.sort((a, b) => dateCompare(b.metadata.publishedAt, a.metadata.publishedAt));

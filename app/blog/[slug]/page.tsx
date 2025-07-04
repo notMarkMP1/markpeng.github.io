@@ -4,6 +4,7 @@ import rehypeHighlight from 'rehype-highlight';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { Metadata } from 'next';
 
 import { getMDXData } from "@/app/utils/mdxUtils";
 import { formatDate, isSameDay } from "@/app/utils/dateUtils";
@@ -11,6 +12,37 @@ import { blogComponents } from "@/app/utils/componentLoader";
 
 const components = {
     ...blogComponents,
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const post = getMDXData(path.join('app', 'blog', 'posts')).find(p => p.metadata.slug === slug);
+    
+    if (!post) {
+        return {
+            title: 'Blog Post Not Found',
+            description: 'The requested blog post could not be found.',
+        };
+    }
+
+    return {
+        title: post.metadata.title,
+        description: post.metadata.description,
+        openGraph: {
+            title: post.metadata.title,
+            description: post.metadata.description,
+            type: 'article',
+            publishedTime: post.metadata.publishedAt,
+            modifiedTime: post.metadata.lastModifiedAt,
+            ...(post.metadata.image && { images: [post.metadata.image] }),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: post.metadata.title,
+            description: post.metadata.description,
+            ...(post.metadata.image && { images: [post.metadata.image] }),
+        },
+    };
 }
 
 export async function generateStaticParams() {
