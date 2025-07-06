@@ -20,7 +20,7 @@ export default function BlogHome(){
                 <h1 className="text-3xl font-bold mb-1">Blog</h1>
             </FadeInSection>
             <FadeInSection delay={0.2}>
-                <p className="text-lg mb-6">i love yapping whether peopole read it or not</p>
+                <p className="text-lg mb-6">i love yapping whether people read it or not</p>
             </FadeInSection>
             <ul className="space-y-4">
                 {posts.map((post, index) => (
