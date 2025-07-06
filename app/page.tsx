@@ -11,6 +11,7 @@ export default function Home() {
   const [depth, setDepth] = useState(1.3);
   const [pressure, setPressure] = useState(0.999);
   const [isMobile, setIsMobile] = useState(false);
+  const [shaderLoaded, setShaderLoaded] = useState(false);
 
   useEffect(() => {
     setDevicePixelRatio(window.devicePixelRatio);
@@ -34,7 +35,9 @@ export default function Home() {
           width: '100%', 
           height: '100vh',
           zIndex: -1, // Place behind other content
-          pointerEvents: 'auto' // Allow interaction with the canvas
+          pointerEvents: 'auto', // Allow interaction with the canvas
+          opacity: shaderLoaded ? 1 : 0.5,
+          transition: 'opacity 0.2s ease-in-out'
         }}
         gl={{
           antialias: true,
@@ -47,6 +50,7 @@ export default function Home() {
           depth={depth}
           pressure={pressure}
           hideUI={hideUI}
+          onLoadedChange={setShaderLoaded}
         />
       </Canvas>
     )}

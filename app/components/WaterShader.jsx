@@ -23,7 +23,7 @@ import {
 } from '@/app/utils/shaders';
 
 
-export default function WaterShader({ depth, pressure, hideUI }, ref) {
+export default function WaterShader({ depth, pressure, hideUI, onLoadedChange }, ref) {
     // scene found on page.tsx
     /*
     SETUP
@@ -34,6 +34,17 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
     const frameCount = useRef(0);
     const [dimensions, setDimensions] = useState([size.width, size.height]);
     const dimensionsRef = useRef(dimensions);
+    
+    // FPS tracking with rolling average
+    const fpsHistory = useRef([]);
+    const lastFrameTime = useRef(performance.now());
+    const [currentFPS, setCurrentFPS] = useState(60);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [texelSizeMultiplier, setTexelSizeMultiplier] = useState(1.0);
+    
+    const LOADING_FRAMES = 60; 
+    const FPS_HISTORY_SIZE = 30;
+    
     useEffect(() => {
         dimensionsRef.current = dimensions;
     }, [dimensions]);
@@ -98,6 +109,8 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
             iChannel0: { value: null },
             delta: { value: depth },
             iPressure: { value: pressure },
+            iFPS: { value: 60 },
+            iTexelSizeMultiplier: { value: 1.0 }
         }
     }));
     
@@ -182,7 +195,12 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
     */
     // simulation and rendering loop
     useFrame(() => {
+
         frameCount.current++;
+
+        calculateFPS();
+
+        if (!isLoaded) return; 
 
         // swap buffers
         const { src, dst } = bufferState.current;
@@ -194,6 +212,9 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
         simMaterial.uniforms.iChannel0.value = src.texture;
         simMaterial.uniforms.delta.value = depth;
         simMaterial.uniforms.iPressure.value = pressure;
+        simMaterial.uniforms.iFPS.value = currentFPS;
+        simMaterial.uniforms.iTexelSizeMultiplier.value = texelSizeMultiplier;
+        
         // run simulation step in offscreen scene
         gl.setRenderTarget(dst);
         gl.render(simScene, simCameraRef.current);
@@ -203,6 +224,37 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
         renderMaterial.uniforms.iChannel0.value = dst.texture;
         renderMaterial.uniforms.iChannel1.value = nameTexture;
     });
+
+    const calculateFPS = () => {
+        const currentTime = performance.now();
+        const deltaTime = currentTime - lastFrameTime.current;
+        lastFrameTime.current = currentTime;
+
+        if (deltaTime > 0) {
+            const fps = 1000 / deltaTime;
+            fpsHistory.current.push(fps);
+
+            if (fpsHistory.current.length > FPS_HISTORY_SIZE) {
+                fpsHistory.current.shift();
+            }
+            
+            const avgFPS = fpsHistory.current.reduce((a, b) => a + b, 0) / fpsHistory.current.length;
+            setCurrentFPS(avgFPS);
+            
+            // dont calculate average until enough frames have passed
+            if (frameCount.current > LOADING_FRAMES) {
+                const newMultiplier = avgFPS < 90 ? 2.0 : 1.0;
+                setTexelSizeMultiplier(newMultiplier);
+
+                if (!isLoaded) {
+                    setIsLoaded(true);
+                    if (onLoadedChange) {
+                        onLoadedChange(true);
+                    }
+                }
+            }
+        }
+    };
     
     // return the scene
     return (
@@ -211,7 +263,7 @@ export default function WaterShader({ depth, pressure, hideUI }, ref) {
             <mesh ref={ref}>
                 <planeGeometry args={[viewport.width, viewport.height]} />
                 <primitive object={renderMaterial} attach="material" />
-            </mesh>z
+            </mesh>
         {/* offscreen simulation */}
         {createPortal(
         <>

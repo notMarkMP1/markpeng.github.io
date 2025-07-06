@@ -13,6 +13,8 @@ export const simMaterialFragmentShader = `
     uniform sampler2D iChannel0; // our input texture
     uniform float delta;
     uniform float iPressure;
+    uniform float iFPS; // current FPS
+    uniform float iTexelSizeMultiplier; // texel size multiplier for FPS adjustment
     varying vec2 vUv;
 
     //const float delta = 1.3;
@@ -31,7 +33,7 @@ export const simMaterialFragmentShader = `
             float pVel = texture2D(iChannel0, uv).y;
 
             // Sample neighboring pixels
-            vec2 texelSize = 1.0 / iResolution;
+            vec2 texelSize = (1.0 / iResolution) * iTexelSizeMultiplier;
             vec2 uv_right = uv + vec2(texelSize.x, 0.0);
             vec2 uv_left = uv + vec2(-texelSize.x, 0.0);
             vec2 uv_up = uv + vec2(0.0, texelSize.y);
