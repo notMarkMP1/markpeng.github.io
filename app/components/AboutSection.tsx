@@ -39,11 +39,11 @@ export default function AboutSection() {
       imagePath: "/images/personal_site.png"
     },
     {
-      title: "AutoClipUpload",
-      description: "Personal utility to automatically upload clips from a game to YouTube.",
-      technologies: ["Python", "Google Cloud", "OAuth2.0"],
-      link: "https://github.com/notMarkMP1/AutoClipUpload",
-      imagePath: "/images/autoclipupload.png",
+      title: "reels-cli",
+      description: "A command line tool that lets you watch Instagram reels straight from your terminal.",
+      technologies: ["C", "Python", "FFmpeg", "Linux", "WSL"],
+      link: "https://github.com/notMarkMP1/reels-cli",
+      imagePath: "/images/reels-cli.png"
     },
     {
       title: "ProportionAI",
@@ -51,6 +51,13 @@ export default function AboutSection() {
       technologies: ["React", "Next.js", "Tailwind CSS", "MongoDB", "Node.js", "Terraform", "AWS"],
       link: "https://github.com/enxilium/proportion",
       imagePath: "/images/proportionai.png"
+    },
+    {
+      title: "AutoClipUpload",
+      description: "Personal utility to automatically upload clips from a game to YouTube.",
+      technologies: ["Python", "Google Cloud", "OAuth2.0"],
+      link: "https://github.com/notMarkMP1/AutoClipUpload",
+      imagePath: "/images/autoclipupload.png",
     },
     {
       title: "DIY Pump it Up",
