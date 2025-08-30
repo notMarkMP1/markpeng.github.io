@@ -8,10 +8,10 @@ export default function AboutSection() {
 
   const timelineItems = [
     {
-      date: "May 2025 - Now", 
+      date: "May 2025 - Aug. 2025", 
       title: "Full Stack Developer Intern",
       company: "Pulsenics", 
-      description: "⭐",
+      description: "Developed firmware and automations for power electronics",
       link: "https://www.pulsenics.com/"
     },
     {
