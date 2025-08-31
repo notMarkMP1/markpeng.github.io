@@ -20,7 +20,7 @@ export default function NavBar() {
                     <Link
                         key={item.path}
                         href={item.path}
-                        className={`px-3 py-2 text-md rounded-xl transition-colors relative font-body
+                        className={`px-3 py-2 text-md font-semibold rounded-xl transition-colors relative font-body
                             ${pathname === item.path ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                     >
                         {item.label}
