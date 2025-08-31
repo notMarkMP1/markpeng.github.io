@@ -25,10 +25,10 @@ export default function Timeline({items}: TimelineProps) {
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     onClick={() => window.open(item.link, "_blank")}
                 >
-                    <div className="absolute left-0 top-0 h-full w-0.5 bg-zinc-700" aria-hidden="true"></div>
+                    <div className="absolute left-0 top-0 h-full w-0.5" style={{ backgroundColor: 'var(--color-primary)' }} aria-hidden="true"></div>
                     <div className="ml-5">
                         <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-semibold">{item.company}</h3>
+                            <h3 className="text-lg font-semibold font-body">{item.company}</h3>
                             <span className="text-sm text-gray-500">{item.date}</span>
                         </div>
                         <p className="text-sm text-gray-500">{item.title}</p>

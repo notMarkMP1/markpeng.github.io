@@ -62,7 +62,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
     return (
         <div className="container max-w-2xl mx-auto px-4 py-4 sm:px-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">{post.metadata.title}</h1>
+                <h1 className="text-3xl font-bold font-heading">{post.metadata.title}</h1>
                 <Link 
                     href="/blog" 
                     className="text-gray-400 hover:text-gray-200 transition-colors duration-200 flex items-center gap-1"

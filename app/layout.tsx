@@ -1,10 +1,20 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Crimson_Text, Inter } from "next/font/google"
 import NavBar from "./components/NavBar"
 import Footer from "./components/Footer"
-const inter = Inter({ subsets: ["latin"] })
+
+const crimsonText = Crimson_Text({ 
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-crimson"
+})
+
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter"
+})
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +57,7 @@ export default function RootLayout({
         }}
         />
       </head>
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
+      <body className={`${crimsonText.variable} ${inter.variable} font-body flex flex-col min-h-screen`}>
         <header className="w-full">
           <NavBar />
         </header>

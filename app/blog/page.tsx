@@ -17,7 +17,7 @@ export default function BlogHome(){
     return (
         <div className="container max-w-2xl mx-auto px-4 py-4 sm:px-6">
             <FadeInSection>
-                <h1 className="text-3xl font-bold mb-1">Blog</h1>
+                <h1 className="text-3xl font-bold mb-1 font-heading">Blog</h1>
             </FadeInSection>
             <FadeInSection delay={0.2}>
                 <p className="text-lg mb-6">i love yapping whether people read it or not</p>
@@ -27,8 +27,8 @@ export default function BlogHome(){
                     <FadeInSection delay={0.1 * (index + 1) + 0.2} key={post.metadata.slug}>
                         <Link href={`/blog/${post.metadata.slug}`}>
                             <li className="border-b-2 pb-4 transition-colors hover:border-zinc-600 duration-200">
-                                    <h2 className="text-xl font-semibold hover:text-white transition-colors duration-200">
-                                        <span className="text-sm text-zinc-300 mr-1 font-normal">{formatDate(post.metadata.publishedAt)}</span> {post.metadata.title}
+                                    <h2 className="text-xl font-semibold hover:text-white transition-colors duration-200 font-body">
+                                        <span className="text-sm text-zinc-300 mr-1 font-body">{formatDate(post.metadata.publishedAt)}</span> {post.metadata.title}
                                     </h2>
                             </li>
                         </Link>

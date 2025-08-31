@@ -19,32 +19,41 @@ export default function Projects({items}: ProjectProps){
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
+    // Updated with more natural, earth-toned colors
     const colorDictionary: { [key: string]: string } = {
-        "AWS": "bg-orange-500",
-        "Java": "bg-yellow-800",
-        "JavaScript": "bg-yellow-700",
-        "MongoDB": "bg-green-500",
-        "Next.js": "bg-zinc-900",
+        "AWS": "bg-orange-600",
+        "Java": "bg-amber-700",
+        "JavaScript": "bg-yellow-600",
+        "MongoDB": "bg-emerald-600",
+        "Next.js": "bg-zinc-800",
         "Node.js": "bg-green-700",
-        "OAuth2.0": "bg-zinc-700",
-        "Python": "bg-blue-900",
-        "React": "bg-blue-500",
-        "Tailwind CSS": "bg-cyan-700",
-        "Terraform": "bg-indigo-700",
-        "Three.js": "bg-zinc-500",
+        "OAuth2.0": "bg-slate-600",
+        "Python": "bg-blue-800",
+        "React": "bg-blue-600",
+        "Tailwind CSS": "bg-teal-600",
+        "Terraform": "bg-purple-700",
+        "Three.js": "bg-gray-600",
         "TypeScript": "bg-blue-700",
-        "WPILib": "bg-red-700"
+        "WPILib": "bg-red-700",
+        "C": "bg-slate-700",
+        "C/C++": "bg-slate-700",
+        "FFmpeg": "bg-red-800",
+        "Linux": "bg-yellow-700",
+        "WSL": "bg-blue-800",
+        "Google Cloud": "bg-blue-500",
+        "Arduino": "bg-teal-700",
+        "Gradle": "bg-green-800"
     }
 
     const colorClasses = [
-        "bg-blue-700",
+        "bg-emerald-700",
+        "bg-teal-700", 
         "bg-green-700",
-        "bg-yellow-700",
+        "bg-blue-700",
+        "bg-amber-700",
+        "bg-orange-700",
         "bg-red-700",
         "bg-purple-700",
-        "bg-pink-700",
-        "bg-indigo-700",
-        "bg-teal-700",
     ];
 
     const handleMouseMove = (e: React.MouseEvent) => {
@@ -76,12 +85,12 @@ export default function Projects({items}: ProjectProps){
                     onMouseLeave={() => setHoveredIndex(null)}
                 >
                     <div className="col-span-1 flex flex-col space-y-0.5">
-                        <h3 className="text-md font-semibold">{item.title}</h3>
+                        <h3 className="text-md font-semibold font-body">{item.title}</h3>
                         <p className="text-sm text-zinc-700">{item.description}</p>
                     </div>
                     <div className="col-span-1">
                         {item.technologies.map((tech, techIndex) => (
-                            <span key={techIndex} className={`inline-block text-xs rounded-full px-2 py-1 mr-0.5 text-white ${colorDictionary[tech] || colorClasses[tech.length % colorClasses.length]} whitespace-nowrap`}>{tech}</span>
+                            <span key={techIndex} className={`inline-block text-xs rounded-full px-2 py-1 mr-0.5 mb-1 text-white ${colorDictionary[tech] || colorClasses[tech.length % colorClasses.length]} whitespace-nowrap`}>{tech}</span>
                         ))}
                     </div>
                 </motion.div>        

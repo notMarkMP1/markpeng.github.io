@@ -20,7 +20,7 @@ export default function NavBar() {
                     <Link
                         key={item.path}
                         href={item.path}
-                        className={`px-3 py-2 text-md rounded-xl transition-colors relative
+                        className={`px-3 py-2 text-md rounded-xl transition-colors relative font-body
                             ${pathname === item.path ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                     >
                         {item.label}
@@ -28,7 +28,7 @@ export default function NavBar() {
                             <motion.div
                                 className="absolute inset-0 rounded-lg -z-10"
                                 layoutId="bubble"
-                                style={{ backgroundColor: "#222222" }}
+                                style={{ backgroundColor: "var(--color-surface-elevated)" }}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
