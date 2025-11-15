@@ -12,7 +12,7 @@ export default function AboutSection() {
       title: "Software Engineer Intern",
       company: "Block",
       description: "⭐",
-      link: "https://www.pulsenics.com/"
+      link: "https://block.xyz/"
     },
     {
       date: "May 2025 - Aug. 2025", 
