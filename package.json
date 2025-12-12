@@ -19,7 +19,7 @@
     "@types/mdx": "^2.0.13",
     "@types/three": "^0.176.0",
     "framer-motion": "^12.6.3",
-    "next": "^15.4.8",
+    "next": "^15.4.10",
     "next-mdx-remote": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
