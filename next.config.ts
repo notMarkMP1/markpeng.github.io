@@ -4,9 +4,9 @@ import createMDX from '@next/mdx';
 const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   outputFileTracingExcludes: {
-    '/': ['.next/cache', '.git'],
-    '/blog/[slug]': ['.next/cache', '.git'],
-    '/blog': ['.next/cache', '.git'],
+    '/': ['.next/cache', '.git', '.pnpm-store/**'],
+    '/blog/[slug]': ['.next/cache', '.git', '.pnpm-store/**'],
+    '/blog': ['.next/cache', '.git', '.pnpm-store/**'],
   }
 };
 
