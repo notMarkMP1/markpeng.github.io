@@ -7,13 +7,13 @@ import Projects from "@/app/components/Projects";
 export default function AboutSection() {
 
   const timelineItems = [
-    {
-      date: "May 2026 - Aug. 2026", 
-      title: "Software Engineer Intern",
-      company: "Block",
-      description: "⭐",
-      link: "https://block.xyz/"
-    },
+    // {
+    //   date: "May 2026 - Aug. 2026", 
+    //   title: "Software Engineer Intern",
+    //   company: "Block",
+    //   description: "⭐",
+    //   link: "https://block.xyz/"
+    // },
     {
       date: "May 2025 - Aug. 2025", 
       title: "Full Stack Developer Intern",
