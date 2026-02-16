@@ -21,7 +21,7 @@
     "framer-motion": "^12.6.3",
     "highlight.js": "^11.11.1",
     "next": "^15.5.10",
-    "next-mdx-remote": "^5.0.0",
+    "next-mdx-remote": "^6.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rehype-highlight": "^7.0.2",
