@@ -18,6 +18,9 @@ type MDXPost = {
 
 export function getMDXData(dir: string): MDXPost[] {
     const postDir = path.join(process.cwd(), dir);
+    if (!fs.existsSync(postDir)) {
+        return [];
+    }
     const files = fs.readdirSync(postDir).filter(file => file.endsWith('.mdx'));
     const posts: MDXPost[] = [];
     
