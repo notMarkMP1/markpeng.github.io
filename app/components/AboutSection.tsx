@@ -3,6 +3,7 @@
 import FadeInSection from "@/app/components/FadeInSection";
 import Timeline from "@/app/components/Timeline";
 import Projects from "@/app/components/Projects";
+import ScrollDrawLine from "@/app/components/ScrollDrawLine";
 
 export default function AboutSection() {
 
@@ -82,27 +83,31 @@ export default function AboutSection() {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
-      <div className="flex flex-col justify-center space-y-4">
-        <FadeInSection>
-          <h1 className="text-4xl font-bold font-heading">About</h1>
-        </FadeInSection>
-        <FadeInSection delay={0.2}>
-          <p className="text-lg">a brief look about me</p>
-        </FadeInSection>
-        <FadeInSection delay={0.4}>
-          <h2 className="text-2xl font-semibold font-heading">Timeline</h2>
-        </FadeInSection>
-        <FadeInSection delay={0.6}>
-          <Timeline items={timelineItems} />
-        </FadeInSection>
-        <FadeInSection delay={0.8}>
-          <h2 className="text-2xl font-semibold font-heading">Projects</h2>
-        </FadeInSection>
-        <FadeInSection delay={1.0}>
-          <Projects items={projectItems} />
-        </FadeInSection>
+    <>
+      <ScrollDrawLine />
+      <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
+        <div className="flex flex-col justify-center space-y-4">
+          <FadeInSection>
+            <h1 className="text-4xl font-bold font-heading">About</h1>
+          </FadeInSection>
+          <FadeInSection delay={0.2}>
+            <p className="text-lg">a brief look about me</p>
+          </FadeInSection>
+          <FadeInSection delay={0.4}>
+            <h2 className="text-2xl font-semibold font-heading">Timeline</h2>
+          </FadeInSection>
+          <FadeInSection delay={0.6}>
+            <Timeline items={timelineItems} />
+          </FadeInSection>
+          <FadeInSection delay={0.8}>
+            <h2 className="text-2xl font-semibold font-heading">Projects</h2>
+          </FadeInSection>
+          <FadeInSection delay={1.0}>
+            <Projects items={projectItems} />
+          </FadeInSection>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
+
