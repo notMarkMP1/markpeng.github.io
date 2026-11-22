@@ -85,7 +85,7 @@ export default function AboutSection() {
   return (
     <>
       <ScrollDrawLine />
-      <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
+      <div className="relative z-10 max-w-2xl mx-auto px-4 py-4 sm:px-6">
         <div className="flex flex-col justify-center space-y-4">
           <FadeInSection>
             <h1 className="text-4xl font-bold font-heading">About</h1>
