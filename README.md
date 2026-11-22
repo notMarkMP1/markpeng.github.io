@@ -3,6 +3,10 @@
 
 my personal website created with [Next.js](https://nextjs.org) and [Tailwind CSS](https://tailwindcss.com)
 
+## Design System & Blueprint
+See [design.md](file:///c:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/design.md) for the master specification, visual tokens (Porter Robinson *Nurture* aesthetic), route mapping, and agent instructions.
+
+
 ## Technologies
 
 the base is done in [Next.js](https://nextjs.org) and [Tailwind CSS](https://tailwindcss.com)
