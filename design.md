@@ -1,129 +1,173 @@
-# Project Nurture — Design System & Master Blueprint
+# Project Nurture — Design Specification & Roadmap
 
-`project-nurture` is the design system and master specification for **Mark Peng's personal website and portfolio** ([markpeng.me](https://markpeng.me)).
+`project-nurture` is the master design specification and execution plan for **Mark Peng's personal website** ([markpeng.me](https://markpeng.me)).
 
-This document serves as the **single source of truth** for all visual design, typography, layout structures, component architecture, and content guidelines. Any AI agent or developer working on this codebase MUST consult and adhere to this blueprint.
+This document is the **single source of truth** for visual direction, locked decisions, open explorations, anti-patterns, and build phases. It intentionally separates **what is locked** from **what is still open to research/prototyping**, so neither Mark nor AI agents guess prematurely.
 
----
-
-## 1. Project Vision & Core Purpose
-
-* **Target Audience:** Technical recruiters, engineering managers, software peers, and design/music enthusiasts.
-* **Core Goal:** Present Mark Peng's work, experience, essays, and contact information with extreme clarity and professionalism while delivering an expressive, memorable visual identity.
-* **Balance Principle:** **Heavy Theme, High Clarity.** The visual aesthetic is expressive and distinct, but content hierarchy, typography contrast, and recruiter scannability MUST NEVER be compromised or obstructed by decorative elements.
+> **Branch Policy:** `project-nurture` will not be published until the full revision is complete. Work cleanly toward the complete dual-theme vision rather than shipping half-measures.
 
 ---
 
-## 2. Visual Aesthetic: Porter Robinson "Nurture" Era
+## 1. North Star & Core Principles
 
-The visual identity is directly inspired by Porter Robinson’s *Nurture* (2021) album design language created in collaboration with graphic designer Samuel Burgess-Johnson.
-
-### Nature vs. Technology (Organic + Digital Synthesis)
-* **Organic Elements:** Lush spring/electric greens, sun-drenched ambient light, soft natural gradients, atmospheric blur, and grounded layout flow.
-* **Digital Overlay Artifacts:** Fine vector coordinate frame lines, pixelated scribbles/doodles in margins, monospace metadata tags (`36° 8′ 0″ N`), micro UI labels, floating technical badges, and delicate glowing glass card overlays.
-* **Mood:** Hopeful, sunlit, introspective, precise, and human.
-
----
-
-## 3. Page Structure & Route Mapping
-
-The website consists strictly of the existing 4 primary routes. **No routes shall be added or deleted without explicit approval.**
-
-1. **Home (`/`)**: 
-   * **Hero Section ("Hero as Thesis"):** High-impact introductory statement blending bold clean typography with *Nurture* coordinate overlays and sunlit ambient glow.
-   * **Featured Projects Grid:** Recruiter-friendly project cards showing project title, quick summary, key tech stack tags, impact stats, and direct links (GitHub / Live Demo).
-   * **Latest Writing & Field Notes:** Highlighted essays and quick updates.
-2. **About (`/about`)**:
-   * **Bio & Background:** Clear, human narrative of Mark's journey as a Software Engineer.
-   * **Technical Skills & Stack:** Categorized grid of languages, frameworks, tools, and platforms.
-   * **Experience Timeline:** Clean chronological work/education history with key achievements.
-   * **Influences & Field Notes:** Personal interests, music, and creative philosophy.
-3. **Blog (`/blog`)**:
-   * **Essays & Articles List:** Searchable/filterable list of MDX posts with publication dates, tags, and estimated read times.
-   * **Article Renderer:** High-legibility reader view with customized code syntax highlighting, callout blockquotes, and Nurture margin details.
-4. **Contact (`/contact`)**:
-   * **Direct Contact:** Quick message form and direct email link.
-   * **Nurture Coordinates Widget:** Ambient coordinate footer stamp (`36° 8′ 0″ N, 115° 9′ 0″ W`).
+* **Audience:** Technical recruiters, engineering managers, software peers, and curious readers.
+* **Primary Priority — Information First:** Getting Mark's experience, projects, writing, and contact info across cleanly is **always** the top priority. This is a professional personal website with an authentic *Nurture* atmosphere — **not** an art installation.
+* **Visual Inspiration:** Porter Robinson's *Nurture* era (2021, Samuel Burgess-Johnson), spanning both sides of its visual language:
+  * **Daylight (*Nurture* album cover):** Clean sunlit whites, fresh meadow greens, quiet natural openness.
+  * **Night (*Get Your Wish* / *Look at the Sky*):** Stark dark canvas, raw white hand-drawn scribbles, framed photography, and subtle twilight/cobalt-blue undertones.
+* **Restraint over Clutter:** Decorative elements live in the margins and background, stay calm, fade gracefully around content, and never compete with text legibility or scannability.
 
 ---
 
-## 4. Design Tokens & Palette
+## 2. Explicit Anti-Patterns (Do NOT Do)
 
-### Color System
-| Token Name | Hex / Value | Description & Usage |
+Previous attempts failed by falling into generic templates or inventing unrequested features. **Never introduce any of the following:**
+
+1. **No "AI dark glow slop":** No neon green `box-shadow` glows, no heavy frosted glassmorphism cards on dark backgrounds, no cyberpunk/HUD eyebrow labels (e.g. `[ 01 // PROJECTS ]`), and no inline SVG pixel doodles.
+2. **No invented features or fake copy:** Do **not** add unrequested sections (no contact form, no fake Las Vegas coordinates, no invented skills grid, no Featured Projects or Latest Writing sections on `/`).
+3. **No unapproved route changes:** Keep strictly `/`, `/about`, `/blog` (+ `/blog/[slug]`), and `/contact`.
+4. **No art obstructing text:** Scribbles, cursor trails, and margin photos must never reduce body contrast below WCAG AA (4.5:1) or collide unreadably with centered content on narrow viewports.
+5. **No premature lock-in on TBD items:** Items marked **Open Exploration** (typography research, dark-mode black vs. blue balance, `/about` Projects redesign, future `/` hero overhaul) require prototypes/comparisons and Mark's sign-off before locking.
+
+---
+
+## 3. Theme System & Palette Direction
+
+### Theme Behavior (Locked)
+* **Default:** Follow system preference (`prefers-color-scheme`) on initial load.
+* **Manual Override:** Provide a subtle, minimal Light / Dark toggle in `NavBar.tsx`, persisted in `localStorage` without flash-of-wrong-theme (FOUC).
+* **Homepage (`/`):** Remains largely untouched during Phases 1–5 (keeping the existing dark `WaterShader` experience) until Phase 6's Hero Overhaul.
+
+### Locked Color Palette (Phase 1)
+Verified and locked across Light (**Sunlit White**) and Dark (**Stark Black**) modes in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css):
+
+| Role | Light Mode — Sunlit White (*Nurture* Daylight) | Dark Mode — Stark Black (*Get Your Wish* Night) |
 | :--- | :--- | :--- |
-| `--color-background` | `#0d110e` | Deep obsidian-forest dark background |
-| `--color-surface` | `#141a16` | Card & container surface |
-| `--color-surface-elevated` | `#1c241e` | Hover state surface & modal overlay |
-| `--color-primary` | `#4ade80` | Vibrant spring green (buttons, active indicators, hero highlights) |
-| `--color-primary-muted` | `#22c55e` | Medium foliage green (subtle borders, icon accents) |
-| `--color-primary-subtle` | `#166534` | Dark green background tint |
-| `--color-primary-soft` | `#dcfce7` | Soft mint green text highlight & light badges |
-| `--color-sunlight` | `#fef08a` | Warm sun-drenched accent yellow (subtle glow) |
-| `--color-text-primary` | `#f9fafb` | Primary high-contrast text |
-| `--color-text-secondary` | `#d1d5db` | Secondary body text |
-| `--color-text-muted` | `#9ca3af` | Metadata & caption text |
-| `--color-text-mono` | `#86efac` | Light green monospace coordinate & code text |
-| `--color-border` | `rgba(74, 222, 128, 0.18)` | Subtle translucent green border |
-| `--color-border-hover` | `rgba(74, 222, 128, 0.45)` | Elevated hover border with glow |
+| **Canvas / Background** | `#fafcf9` | `#090909` |
+| **Surfaces (Card / Elevated / Code)** | `#f2f6f1` / `#e7efe6` / `#f0f4ef` | `#131313` / `#1f1f1f` / `#131313` |
+| **Primary Accent** | `#1f7a4c` (muted `#165c38`, subtle `#e7f3eb`, soft `#2e8b57`) | `#72e3a6` (muted `#4cd48c`, subtle `rgba(114, 227, 166, 0.1)`, soft `#a7f3d0`) |
+| **Secondary Accents (Sky / Warning)** | `#2f5fa8` (`#edf3fb`) / `#9a5b13` (`#fbf4e8`) | `#89b0ff` (`rgba(137, 176, 255, 0.09)`) / `#ebb76c` (`rgba(235, 183, 108, 0.1)`) |
+| **Text (Primary / Secondary / Muted / Subtle)** | `#161b17` / `#445047` / `#627066` / `#748278` | `#fafafa` / `#c9c9ce` / `#8a8a93` / `#696972` |
+| **Borders (Default / Muted)** | `#dce5dc` / `#c2d1c4` | `#272727` / `#3b3b3b` |
+| **Scribble Stroke** | `#26382c` at `0.16` opacity | `#ffffff` at `0.19` opacity |
 
-### Glassmorphism & Ambient Glow
-* **Glass Container:** `background: rgba(20, 26, 22, 0.75); backdrop-filter: blur(12px); border: 1px solid var(--color-border);`
-* **Nurture Glow:** `box-shadow: 0 0 30px rgba(74, 222, 128, 0.12);`
+### Locked UI Craft Decisions (Phase 1)
+* **Light/Dark Toggle ([ThemeToggle.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ThemeToggle.tsx)):** Borderless `h-9 w-9 rounded-lg` icon button in `NavBar.tsx` that lights up with `--color-surface-elevated` on hover (matching active nav pills) — no box border.
+* **Code Blocks & Inline Code ([CodeElements.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/mdx/CodeElements.tsx) & [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css)):** Borderless surface-filled containers (`border: none`) with crisp low-radius corners (`0.25rem` fenced blocks, `0.15rem` inline code) to avoid uneven subpixel corner borders. Double-clicking selects the full inline token or fenced code block cleanly, and fenced blocks include a subtle, borderless corner Copy button.
 
 ---
 
-## 5. Typography System
+## 4. Typography (Baseline + Open Research)
 
-| Role | Font Family | Usage |
-| :--- | :--- | :--- |
-| **Display / Headlines** | `Inter`, `Outfit`, or system-ui sans | `h1`, `h2`, `h3` section titles (bold, clean, high scannability) |
-| **Body Text** | `Inter`, system-ui sans | Paragraphs, bio text, project descriptions, blog copy |
-| **Nurture Metadata & Code** | `JetBrains Mono`, `Space Mono`, or `ui-monospace` | Coordinates (`36° 8' 0" N`), date stamps, tech tags, code blocks |
-
-### Type Hierarchy Rules
-* **H1 (Hero):** `text-4xl sm:text-5xl lg:text-6xl`, tracking tight, font-bold, with green/sunlight gradient accents.
-* **H2 (Section Header):** `text-2xl sm:text-3xl`, font-semibold, paired with a small monospace eyebrow label (e.g. `[ 01 // PROJECTS ]`).
-* **H3 (Card Title):** `text-xl`, font-semibold, primary text color.
-* **Body:** `text-base`, `line-height: 1.6`, secondary text color for optimal readability.
-* **Metadata / Coordinates:** `text-xs font-mono tracking-widest text-green-accent/80 upper-case`.
+* **Current Working Baseline:** `Crimson Text` (editorial serif for headings) paired with `Inter` (clean sans-serif for body/UI), already wired in [app/layout.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/layout.tsx).
+* **Why Serif Headings Stay in the Conversation:** Editorial serif typography aligns much more authentically with *Nurture* / *Get Your Wish* than generic sans-serif + cyberpunk monospace.
+* **Open Exploration (Phase 2):** Font choices are **not** locked yet. Research and visually compare 2–3 curated pairings (e.g. `Crimson Text` refinements vs. `Newsreader`, `EB Garamond`, `Instrument Serif`, plus body sans and subtle caption/code fonts) directly against real page content in both Light and Dark modes before committing.
 
 ---
 
-## 6. Recruiter & Usability Guardrails
+## 5. Signature *Nurture* Motifs & Interaction Rules
 
-To ensure recruiters can immediately locate critical candidate information in < 15 seconds:
-1. **Top Navigation Bar:** Persistent, clean navbar containing links to Home, About, Blog, Contact, plus a prominent "Resume / GitHub" action.
-2. **Project Summaries:** Every project card MUST feature:
-   * Project Title & One-line elevator pitch.
-   * Key Technologies used (e.g. `React`, `TypeScript`, `Next.js`, `Python`).
-   * Measurable Impact / Key features.
-   * External links: `[ GitHub Repo ]` and `[ Live Demo ]`.
-3. **Contact Information:** Clear, un-obscured email and social links on both `/contact` and footer.
-4. **Mobile Responsiveness:** Layouts collapse gracefully down to 320px screens. Tap targets are at least 44px height.
-5. **Accessibility (a11y):** Color contrast ratio >= 4.5:1 for body text, visible focus outlines on interactive controls, and `prefers-reduced-motion` compliance.
+### A. Procedural Scroll-Drawn Scribble (`ScrollDrawLine` + `generateOrganicPath`) — **Implemented Baseline**
+* **Current Status:** Working and committed (`8fcc9af`) in [app/components/ScrollDrawLine.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ScrollDrawLine.tsx) and [app/utils/generateOrganicPath.ts](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/utils/generateOrganicPath.ts).
+* **Behavior:** Generates a fresh seeded *Nurture*-style scribble per refresh across four stroke personalities (`loose`, `crisp`, `whip`, `sharp`), draws smoothly with slow-then-fast catch-up easing, and uses a CSS `mask-image` to fade gently behind the centered `max-w-2xl` text column on narrower desktops.
+* **Page Threshold Rule (Locked):** Only mount/render on secondary pages whose scrollable document height passes a meaningful threshold (e.g., `scrollHeight > innerHeight * 1.35`, such as `/about` and long `/blog/[slug]` posts). **Do not** render on short pages like `/blog` index or `/contact`, and never on `/`.
+* **Upgrades Needed (Phases 1 & 3):** Make stroke color theme-aware (Light + Dark), enforce the height threshold automatically, and respect `prefers-reduced-motion`.
+
+### B. Personal Margin Photography (`/about`) — **Planned (Phase 4)**
+* **Concept:** Real personal photos supplied by Mark (sharing glimpses of who he is — not generic stock nature photos) placed as quiet, framed prints in the wide outer desktop margins around the centered `/about` column (evolving Mark's earlier wireframe sketch).
+* **Behavior:**
+  * Crisp, restrained framing (no loud drop shadows or polaroid gimmicks).
+  * Gentle scroll fade-in or subtle parallax drift.
+  * Optional understated caption on hover.
+  * **Responsive rule:** Only shown in the outer gutters when viewport width comfortably clears the centered `max-w-2xl` content column; hidden or cleanly collapsed on narrow/mobile screens so text is never crowded.
+
+### C. Subtle Raw Cursor Trail (`MouseTrail`) — **Planned (Phase 3)**
+* **Concept:** Unsmoothed, straight-segment hairline canvas trail that fades out organically over ~2.5–3.5s, evoking the raw hand-drawn linework of *Get Your Wish* (evolving the prototype in worktree `warp-luna-surges-15h41`).
+* **Guardrails:**
+  * Active on secondary routes (`/about`, `/blog`, `/contact`) — **never** on `/` (where `WaterShader` owns pointer interaction).
+  * Desktop fine-pointer devices only (`(pointer: fine)`), automatically disabled on touch screens and when `prefers-reduced-motion: reduce` is set.
+  * Theme-aware stroke color with restrained opacity so it feels atmospheric rather than distracting, and fades cleanly behind or lightly over empty space without impeding reading or clicking.
 
 ---
 
-## 7. Signature Nurture Decorative Elements
+## 6. Route-by-Route Specification
 
-When building components, use these signature decorative elements to infuse the *Nurture* visual identity without cluttering content:
+Strictly preserve the existing 4 routes:
 
-1. **Digital Frame Margins:** Hairline corner brackets (`+` or `┌ ┐`) on key cards and hero sections.
-2. **Floating Coordinates Tag:** Monospace coordinate badge (e.g. `36° 08′ 00″ N — 115° 09′ 00″ W`) pinned subtly in section headers or footers.
-3. **Pixel Doodle Accents:** Subtle inline SVG pixel stars, leaves, or sunburst icons in section dividers.
-4. **Sunlight Ambient Backdrop:** Soft radial gradient blurs (`bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-900/20 via-transparent to-transparent`) behind hero elements.
+### 1. Home (`/`) — [app/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/page.tsx)
+* **Current Scope (Phases 1–5):** Keep largely untouched — existing `WaterShader` canvas, centered greeting, short bio line, Resume / LinkedIn / GitHub icon links, and "play with the shader" controls. Apply at most minor cleanup if needed for layout consistency.
+* **Future Scope (Phase 6 — TBD):** Full *Nurture*-inspired Hero Overhaul. Intentionally deferred so secondary pages, theming, and visual craft are nailed first.
+
+### 2. About (`/about`) — [app/components/AboutSection.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/AboutSection.tsx)
+* **Content Structure:** Keep the clean minimalist flow (`About` header → short intro → `Timeline` → `Projects`).
+* **Visual Layer:** Theme-aware `ScrollDrawLine`, `MouseTrail`, and desktop outer-margin personal photos (Phase 4).
+* **`Timeline` ([Timeline.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Timeline.tsx)):** Preserve the crisp left accent rail and scannable company/role/date hierarchy; migrate hardcoded `text-gray-*` colors to semantic Light/Dark tokens.
+* **`Projects` ([Projects.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Projects.tsx)) — Open Exploration (Phase 5):**
+  * **Known Pain Points:**
+    1. ~~`text-zinc-700` descriptions have very poor contrast on dark backgrounds.~~ *(Fixed in Phase 1 with semantic `--color-text-secondary`.)*
+    2. 15+ saturated rainbow Tailwind tech pills clash with a cohesive *Nurture* palette.
+    3. Cursor-following floating image preview (`300x200`) is desktop-only and can feel jumpy.
+  * **Exploration Options to Prototype in Phase 5:** (a) Refined minimal list with unified monochrome/accent tags and cleaner preview, (b) Editorial 2-column card grid with visible thumbnails & direct links, or (c) Hybrid compact list with inline expandable preview.
+
+### 3. Blog (`/blog` & `/blog/[slug]`) — [app/blog/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/blog/page.tsx)
+* **Content Structure:** Keep the minimalist post list and MDX article reader. Do not add search/filter widgets unless Mark requests them later.
+* **Visual Layer:** Semantic Light/Dark tokens for list dividers, hover states, MDX prose, `<Callout>` notes, interactive React embeds, blockquotes, and borderless code blocks (dual-theme `rehype-highlight`, double-click selection, and corner Copy button). `ScrollDrawLine` is active on `/blog/[slug]` articles (with automatic height-threshold gating + `MouseTrail` arriving in Phase 3).
+
+### 4. Contact (`/contact`) — [app/contact/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/contact/page.tsx)
+* **Content Structure:** Keep the clean email display and Website Credits link (fixing the existing `"website repostitory"` typo). No contact form, no fake coordinates.
+* **Visual Layer:** Semantic Light/Dark tokens + `MouseTrail`. No `ScrollDrawLine` (page is below height threshold).
+
+### Shared Chrome (`NavBar` & `Footer`)
+* **[NavBar.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/NavBar.tsx):** Keep the centered spring-pill navigation (`Home`, `About`, `Blog`, `Contact`) + add a subtle, unobtrusive Light/Dark toggle button.
+* **[Footer.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Footer.tsx):** Remains hidden on `/`; update divider, tooltips, SVG icon contrast (for Light + Dark), and copyright text to semantic tokens.
+
+---
+
+## 7. Phased Execution Roadmap
+
+### Completed Baseline
+* [x] Rebased `project-nurture` cleanly onto `main` (`b03a07c`).
+* [x] Built procedural RNG scroll-draw scribble with 4 stroke personalities and CSS `mask-image` content-column fade ([ScrollDrawLine.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ScrollDrawLine.tsx), [generateOrganicPath.ts](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/utils/generateOrganicPath.ts), commit `8fcc9af`).
+
+### Phase 1 — Dual-Theme Foundation & Semantic Tokens *(Completed)*
+* [x] Implemented `prefers-color-scheme` theme provider with zero-FOUC initialization and a borderless hover-pill Light/Dark toggle in `NavBar.tsx`.
+* [x] Locked CSS custom property tokens in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css) for Light (**Sunlit White** `#fafcf9` + *Nurture* meadow green) and Dark (**Stark Black** `#090909` + restrained green/sky accents).
+* [x] Replaced hardcoded dark-only Tailwind colors across `NavBar`, `Footer`, `Timeline`, `Projects`, `Blog`, `Contact` (fixing the `"website repostitory"` typo), and `not-found`.
+* [x] Added dual Light/Dark `rehype-highlight` code styles, borderless low-radius code containers with double-click selection & corner copy button, `<Callout>` + interactive MDX sandbox post, and theme-aware `ScrollDrawLine` on `/about` and `/blog/[slug]`.
+
+### Phase 2 — Typography Research & Refinement *(Open Exploration)*
+* Research and preview 2–3 *Nurture*-aligned typography pairings alongside the `Crimson Text` + `Inter` baseline in both Light and Dark modes.
+* Lock final font choices, scale, tracking, and MDX prose rhythm with Mark's sign-off.
+
+### Phase 3 — Secondary-Page Atmosphere (`MouseTrail` + Smart `ScrollDrawLine`)
+* Upgrade `ScrollDrawLine` with automatic page-height threshold gating (`scrollHeight > innerHeight * 1.35`) and `prefers-reduced-motion` support, enabling it cleanly across tall secondary pages (`/about`, long `/blog/[slug]` articles).
+* Port and refine `MouseTrail` (referencing the `warp-luna-surges-15h41` prototype): unsmoothed raw segments, theme-aware color, fine-pointer & reduced-motion guards, subtle opacity, non-home routes only.
+
+### Phase 4 — Personal Margin Photography (`/about`)
+* Design and build a reusable margin photo component (`MarginPhotos`) for desktop outer gutters with clean framing, gentle scroll parallax/fade, optional hover captions, and clean responsive hiding on narrow viewports.
+* Start with placeholder slots and documented aspect-ratio/file conventions (`public/images/personal/...`) so Mark can drop in his own photos effortlessly.
+
+### Phase 5 — `/about` Projects Section Exploration & Redesign *(Open Exploration)*
+* Prototype 2–3 concrete layouts addressing contrast (`text-zinc-700`), rainbow tech pills, and mobile-friendly project previews.
+* Review live in the browser with Mark, pick the winner, and finalize `Projects.tsx`.
+
+### Phase 6 — Homepage (`/`) *Nurture* Hero Overhaul *(Future Scope — TBD)*
+* Dedicated design & brainstorming phase for drastically reimagining `/` in the *Nurture* spirit once Phases 1–5 are complete.
+
+### Pre-Launch QA & Cleanup
+* Verify Light + Dark contrast (>= 4.5:1), responsive behavior (320px mobile → 1440px+ ultrawide), and `prefers-reduced-motion` across all 4 routes.
+* Run `npm run build` with zero lint/type/build errors.
+* Clean up the obsolete `warp-luna-surges-15h41` worktree once any desired reference code (`MouseTrail.tsx`) is migrated.
 
 ---
 
 ## 8. Guidelines for AI Agents & Developers
 
-When making changes to this codebase:
-* **Check `design.md` First:** Maintain consistency with all color tokens, font rules, and route boundaries.
-* **No Unnecessary Routing Changes:** Keep `/`, `/about`, `/blog`, `/contact`.
-* **Component Modularity:** Place reusable components under `app/components/` (e.g. `NavBar.tsx`, `Footer.tsx`, `ProjectCard.tsx`, `NurtureBadge.tsx`).
-* **Test Build & Visual Quality:** Always run `npm run build` or test commands to verify zero build or lint failures after edits.
+1. **Read `design.md` before coding** — honor all locked rules and anti-patterns in Sections 1–6.
+2. **Work one phase at a time** — do not jump ahead into Open Exploration or Future Scope phases without asking Mark.
+3. **Keep components modular** under `app/components/` and utilities under `app/utils/`.
+4. **Verify after edits** — run `npm run build` to guarantee clean TypeScript compilation and static route generation.
 
 ---
 
-*Last Updated: July 2026*
+*Revised: November 2026*

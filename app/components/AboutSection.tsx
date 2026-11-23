@@ -88,19 +88,19 @@ export default function AboutSection() {
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-4 sm:px-6">
         <div className="flex flex-col justify-center space-y-4">
           <FadeInSection>
-            <h1 className="text-4xl font-bold font-heading">About</h1>
+            <h1 className="text-4xl font-bold font-heading text-[var(--color-text-primary)]">About</h1>
           </FadeInSection>
           <FadeInSection delay={0.2}>
-            <p className="text-lg">a brief look about me</p>
+            <p className="text-lg text-[var(--color-text-secondary)]">a brief look about me</p>
           </FadeInSection>
           <FadeInSection delay={0.4}>
-            <h2 className="text-2xl font-semibold font-heading">Timeline</h2>
+            <h2 className="text-2xl font-semibold font-heading text-[var(--color-text-primary)]">Timeline</h2>
           </FadeInSection>
           <FadeInSection delay={0.6}>
             <Timeline items={timelineItems} />
           </FadeInSection>
           <FadeInSection delay={0.8}>
-            <h2 className="text-2xl font-semibold font-heading">Projects</h2>
+            <h2 className="text-2xl font-semibold font-heading text-[var(--color-text-primary)]">Projects</h2>
           </FadeInSection>
           <FadeInSection delay={1.0}>
             <Projects items={projectItems} />

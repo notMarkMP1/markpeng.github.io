@@ -1,0 +1,100 @@
+---
+title: "Procedural Scribbles & Dual-Theme Notes"
+description: "An example MDX article showcasing callout notes, syntax-highlighted code blocks, tables, and an embedded React component."
+publishedAt: "2026-11-18"
+lastModifiedAt: "2026-11-22"
+slug: "procedural-scribbles-and-dual-themes"
+---
+
+<Callout type="note" title="Design Sandbox Post">
+  This is a sample article created for **Project Nurture** so you can inspect headings, prose rhythm, notes, code highlighting, tables, and embedded React components in both Light and Dark mode while iterating on the design.
+</Callout>
+
+Building a personal site that feels calm yet unmistakable usually comes down to restraint. Rather than stacking glow effects or heavy cards, the structure should let words breathe while a single visual motif carries the mood in the margins.
+
+In this design system, that motif is a procedural *Nurture*-inspired stroke paired with two deliberately tuned color modes: **sunlit daylight** and **rain-lit night**.
+
+## Callouts & Editorial Notes
+
+Markdown blockquotes work well for short epigraphs or pulled reflections:
+
+> Good personal websites read like a quiet desk with good light — everything you need is easy to find, and nothing is shouting for attention.
+
+For structured engineering notes, custom MDX components like `<Callout>` let you separate context, tips, and caveats without breaking reading flow:
+
+<Callout type="tip" title="Zero-FOUC Theme Initialization">
+  Setting `data-theme` in a tiny synchronous `<script>` inside `<head>` ensures the browser resolves `localStorage` and `prefers-color-scheme` *before* first paint — preventing any white flash when loading in dark mode.
+</Callout>
+
+<Callout type="warning" title="Contrast Guardrail">
+  Avoid styling captions or secondary copy with hardcoded Tailwind grays like `text-zinc-700`. Always bind to semantic tokens (`--color-text-secondary`, `--color-text-muted`) verified against both canvases.
+</Callout>
+
+## Syntax-Highlighted Code Blocks
+
+Code snippets are processed at build time via `rehype-highlight`, with custom CSS variables switching every token group cleanly between Light and Dark themes.
+
+### TypeScript — Seeded Curve Generator
+
+```ts
+export interface CurveConfig {
+  seed: number;
+  style: "loose" | "crisp" | "whip" | "sharp";
+  density?: number;
+}
+
+export function lerpProgress(current: number, target: number, elapsedMs: number): number {
+  const t = Math.min(elapsedMs / 800, 1);
+  // Slow start that accelerates smoothly to catch up with fast scrolling
+  const factor = 0.008 + t * t * 0.14;
+  const next = current + (target - current) * factor;
+  return Math.abs(target - next) < 0.0005 ? target : next;
+}
+```
+
+### CSS — Semantic Token Architecture
+
+```css
+:root {
+  --color-background: #fafcf9;
+  --color-surface: #f2f6f1;
+  --color-primary: #1f7a4c;
+  --color-text-primary: #161b17;
+  --color-text-secondary: #445047;
+}
+
+[data-theme="dark"] {
+  --color-background: #090909;
+  --color-surface: #131313;
+  --color-primary: #72e3a6;
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #c9c9ce;
+}
+```
+
+## Embedded Interactive React Component
+
+Because MDX renders through `next-mdx-remote/rsc` with `blogComponents` wired in `app/utils/componentLoader.ts`, any `'use client'` React component can live right inside an article. Below is a live sandbox calling the site's actual `generateOrganicPath` utility:
+
+<ScribblePlayground />
+
+## Structured Data & Rhythm Check
+
+Tables, lists, and inline code (`window.matchMedia('(prefers-color-scheme: dark)')`) are useful stress tests for hairline borders and vertical spacing:
+
+| Stroke Personality | Feel | Typical Segment Tension | Best Used For |
+| :--- | :--- | :--- | :--- |
+| `loose` | Sweeping, airy loops | Low tension | Long reflective essays |
+| `crisp` | Balanced editorial ink | Medium tension | `/about` timeline margins |
+| `whip` | Fast directional flicks | Variable tension | Dynamic vertical transitions |
+| `sharp` | Angular, raw sketches | High tension | *Get Your Wish* night contrast |
+
+### Quick Checklist While Previewing
+
+1. Toggle between **Light** and **Dark** in the navigation bar and verify there is no harsh border contrast or faded body copy.
+2. Check inline `code`, blockquotes, callouts, and code block scrollbars on both desktop and narrow mobile widths.
+3. Notice how headings (`Crimson Text`) contrast with UI and body text (`Inter`) — we'll compare alternative serif/sans pairings in **Phase 2**.
+
+---
+
+When you're ready to publish your own writing, you can delete or replace `app/blog/posts/nurture-design-sandbox.mdx` and keep `<Callout>` (or any future interactive widgets) in `app/utils/componentLoader.ts`.

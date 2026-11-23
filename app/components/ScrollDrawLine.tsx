@@ -130,8 +130,11 @@ export default function ScrollDrawLine({
             d={pathD}
             fill="none"
             strokeWidth="2"
-            stroke="white"
-            strokeOpacity="0.18"
+            style={{
+              stroke: 'var(--color-scribble)',
+              strokeOpacity: 'var(--scribble-opacity)',
+              transition: 'stroke 0.25s ease, stroke-opacity 0.25s ease',
+            }}
             strokeLinecap="round"
             strokeLinejoin="round"
           />

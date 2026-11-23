@@ -85,8 +85,8 @@ export default function Projects({items}: ProjectProps){
                     onMouseLeave={() => setHoveredIndex(null)}
                 >
                     <div className="col-span-1 flex flex-col space-y-0.5">
-                        <h3 className="text-md font-semibold font-body">{item.title}</h3>
-                        <p className="text-sm text-zinc-700">{item.description}</p>
+                        <h3 className="text-md font-semibold font-body text-[var(--color-text-primary)]">{item.title}</h3>
+                        <p className="text-sm text-[var(--color-text-secondary)]">{item.description}</p>
                     </div>
                     <div className="col-span-1">
                         {item.technologies.map((tech, techIndex) => (
@@ -115,7 +115,7 @@ export default function Projects({items}: ProjectProps){
                         onLoad = {(e) => {e.currentTarget.setAttribute('data-loaded', 'true')}}
                         width={300}
                         height={200}
-                        className="data-[loaded=false]:animate-pulse data-[loaded=false]:bg-zinc-100/50 w-full h-full object-cover"
+                        className="data-[loaded=false]:animate-pulse data-[loaded=false]:bg-[var(--color-surface)] w-full h-full object-cover"
                     />
                 </motion.div>
             )}

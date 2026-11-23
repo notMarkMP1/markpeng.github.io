@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { Crimson_Text, Inter } from "next/font/google"
 import NavBar from "./components/NavBar"
 import Footer from "./components/Footer"
+import { ThemeProvider } from "./components/ThemeProvider"
 
 const crimsonText = Crimson_Text({ 
   subsets: ["latin"],
@@ -41,15 +42,34 @@ const jsonLD = {
     "jobTitle": "Software Engineer"  
 }
 
+// Runs synchronously before first paint to prevent flash of wrong theme (FOUC)
+const themeInitScript = `
+(function() {
+  try {
+    var root = document.documentElement;
+    var stored = window.localStorage.getItem('nurture-theme');
+    var theme = (stored === 'light' || stored === 'dark')
+      ? stored
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    if (window.location.pathname === '/') {
+      root.dataset.home = 'true';
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -58,15 +78,17 @@ export default function RootLayout({
         />
       </head>
       <body className={`${crimsonText.variable} ${inter.variable} font-body flex flex-col min-h-screen`}>
-        <header className="w-full">
-          <NavBar />
-        </header>
-        <main className="flex-grow flex flex-col">
-          <div className="flex-grow">
-            {children}
-          </div>
-        </main>
-        <Footer />
+        <ThemeProvider>
+          <header className="w-full">
+            <NavBar />
+          </header>
+          <main className="flex-grow flex flex-col">
+            <div className="flex-grow">
+              {children}
+            </div>
+          </main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

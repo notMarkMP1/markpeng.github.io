@@ -9,10 +9,11 @@ import { Metadata } from 'next';
 import { getMDXData } from "@/app/utils/mdxUtils";
 import { formatDate, isSameDay } from "@/app/utils/dateUtils";
 import { blogComponents } from "@/app/utils/componentLoader";
+import ScrollDrawLine from "@/app/components/ScrollDrawLine";
 
 const components = {
     ...blogComponents,
-}
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const { slug } = await params;
@@ -49,51 +50,57 @@ export async function generateStaticParams() {
     const posts = getMDXData(path.join('app', 'blog', 'posts'));
     return posts.map(post => ({
         slug: post.metadata.slug
-    }))
+    }));
 }
 
-export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }){
+export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
     const post = getMDXData(path.join('app', 'blog', 'posts')).find(p => p.metadata.slug === slug);
     if (!post) {
         notFound();
     }
     const shouldShowLastModified = !isSameDay(post.metadata.publishedAt, post.metadata.lastModifiedAt);
+
     return (
-        <div className="container max-w-2xl mx-auto px-4 py-4 sm:px-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold font-heading">{post.metadata.title}</h1>
-                <Link 
-                    href="/blog" 
-                    className="text-gray-400 hover:text-gray-200 transition-colors duration-200 flex items-center gap-1"
-                >
-                    <span className="underline">← go back</span>
-                </Link>
-            </div>
-            <p className="text-gray-400 text-md mb-0.5">{post.metadata.description}</p>
-            <div className="text-gray-600 flex flex-row row-1 justify-between items-center mb-2">
-                <p>
-                    Published on {formatDate(post.metadata.publishedAt)}
-                </p>
-                {shouldShowLastModified && (
-                    <p>
-                        Last modified on {formatDate(post.metadata.lastModifiedAt)}
+        <>
+            <ScrollDrawLine />
+            <article className="relative z-10 container max-w-2xl mx-auto px-4 py-4 sm:px-6">
+                <div className="flex justify-between items-baseline gap-4">
+                    <h1 className="text-3xl font-bold font-heading text-[var(--color-text-primary)]">
+                        {post.metadata.title}
+                    </h1>
+                    <Link 
+                        href="/blog" 
+                        className="shrink-0 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors duration-200 flex items-center gap-1"
+                    >
+                        <span className="underline underline-offset-4">← go back</span>
+                    </Link>
+                </div>
+                {post.metadata.description && (
+                    <p className="text-[var(--color-text-secondary)] text-base mt-1 mb-2">
+                        {post.metadata.description}
                     </p>
                 )}
-            </div>
-            <hr className="border-gray-600 mb-2" />
-            <div className="prose prose-lg max-w-none prose-invert">
-                <MDXRemote 
-                    source={post.content}
-                    components={components}
-                    options={{
-                        mdxOptions: {
-                            remarkPlugins: [remarkGfm],
-                            rehypePlugins: [rehypeHighlight],
-                        }
-                    }}
-                />
-            </div>
-        </div>
+                <div className="text-sm text-[var(--color-text-muted)] flex flex-wrap justify-between items-center gap-2 mb-3">
+                    <p>Published on {formatDate(post.metadata.publishedAt)}</p>
+                    {shouldShowLastModified && (
+                        <p>Last modified on {formatDate(post.metadata.lastModifiedAt)}</p>
+                    )}
+                </div>
+                <hr className="border-[var(--color-border)] mb-6" />
+                <div className="prose prose-lg max-w-none">
+                    <MDXRemote 
+                        source={post.content}
+                        components={components}
+                        options={{
+                            mdxOptions: {
+                                remarkPlugins: [remarkGfm],
+                                rehypePlugins: [rehypeHighlight],
+                            }
+                        }}
+                    />
+                </div>
+            </article>
+        </>
     );
 }
