@@ -4,6 +4,7 @@ import FadeInSection from "@/app/components/FadeInSection";
 import Timeline from "@/app/components/Timeline";
 import Projects from "@/app/components/Projects";
 import ScrollDrawLine from "@/app/components/ScrollDrawLine";
+import PersonalPhotoStrip from "@/app/components/PersonalPhotoStrip";
 
 export default function AboutSection() {
 
@@ -86,21 +87,22 @@ export default function AboutSection() {
     <>
       <ScrollDrawLine />
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-4 sm:px-6">
-        <div className="flex flex-col justify-center space-y-4">
+        <div className="flex flex-col justify-center">
           <FadeInSection>
-            <h1 className="text-4xl font-bold font-heading text-[var(--color-text-primary)]">About</h1>
+            <h1 className="text-[2.2rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">About</h1>
           </FadeInSection>
           <FadeInSection delay={0.2}>
-            <p className="text-lg text-[var(--color-text-secondary)]">a brief look about me</p>
+            <p className="mt-1.5 text-[15.5px] leading-relaxed text-[var(--color-text-secondary)]">a brief look about me</p>
+            <PersonalPhotoStrip />
           </FadeInSection>
           <FadeInSection delay={0.4}>
-            <h2 className="text-2xl font-semibold font-heading text-[var(--color-text-primary)]">Timeline</h2>
+            <h2 className="section-heading mt-8 mb-4 text-[1.4rem] font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Timeline</h2>
           </FadeInSection>
           <FadeInSection delay={0.6}>
             <Timeline items={timelineItems} />
           </FadeInSection>
           <FadeInSection delay={0.8}>
-            <h2 className="text-2xl font-semibold font-heading text-[var(--color-text-primary)]">Projects</h2>
+            <h2 className="section-heading mt-8 mb-4 text-[1.4rem] font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Projects</h2>
           </FadeInSection>
           <FadeInSection delay={1.0}>
             <Projects items={projectItems} />

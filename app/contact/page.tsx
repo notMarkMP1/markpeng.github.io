@@ -8,16 +8,16 @@ export default function Contact() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6">
       <FadeInSection>
-        <h1 className="text-3xl font-bold font-heading text-[var(--color-text-primary)]">Contact</h1>
+        <h1 className="text-[2.2rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">Contact</h1>
       </FadeInSection>
       <FadeInSection delay={0.2}>
-        <p className="text-lg text-[var(--color-text-secondary)] mt-1">markminpeng [at] gmail [dot] com</p>
+        <p className="text-[15.5px] leading-relaxed text-[var(--color-text-secondary)] mt-1.5">markminpeng [at] gmail [dot] com</p>
       </FadeInSection>
       <FadeInSection delay={0.4}>
-        <h2 className="text-xl mt-6 font-bold font-heading text-[var(--color-text-primary)]">Website Credits</h2>
+        <h2 className="section-heading text-[1.35rem] mt-8 mb-2 font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Website Credits</h2>
       </FadeInSection>
       <FadeInSection delay={0.6}>
-        <p className="text-[var(--color-text-secondary)] mt-1">
+        <p className="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
           can be found on the{" "}
           <a
             href="https://github.com/notMarkMP1/markpeng.github.io"

@@ -1,20 +1,28 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata } from "next"
-import { Crimson_Text, Inter } from "next/font/google"
+import { Shippori_Mincho, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
 import NavBar from "./components/NavBar"
 import Footer from "./components/Footer"
 import { ThemeProvider } from "./components/ThemeProvider"
 
-const crimsonText = Crimson_Text({ 
+const shipporiMincho = Shippori_Mincho({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-crimson"
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-shippori",
 })
 
-const inter = Inter({ 
+const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin"],
-  variable: "--font-inter"
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-plex-sans",
+})
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
 })
 
 export const metadata: Metadata = {
@@ -77,7 +85,7 @@ export default function RootLayout({
         }}
         />
       </head>
-      <body className={`${crimsonText.variable} ${inter.variable} font-body flex flex-col min-h-screen`}>
+      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} font-body flex flex-col min-h-screen antialiased`}>
         <ThemeProvider>
           <header className="w-full">
             <NavBar />

@@ -30,7 +30,7 @@ export default function NavBar() {
             <Link
               key={item.path}
               href={item.path}
-              className={`px-3 py-2 text-md font-semibold rounded-xl transition-colors relative font-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] ${
+              className={`px-3 py-2 text-[15px] font-medium tracking-[0.01em] rounded-xl transition-colors relative font-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] ${
                 active
                   ? 'text-[var(--color-text-primary)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'

@@ -19,6 +19,8 @@ interface ScrollDrawLineProps {
   density?: number;
 }
 
+const HEIGHT_THRESHOLD_RATIO = 1.35;
+
 export default function ScrollDrawLine({
   seed,
   composition = 'auto',
@@ -32,6 +34,8 @@ export default function ScrollDrawLine({
   const prevTarget = useRef(0);
   const [pathLength, setPathLength] = useState(0);
   const [activeSeed, setActiveSeed] = useState<number | null>(seed ?? null);
+  const [meetsHeightThreshold, setMeetsHeightThreshold] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   // Pick a fresh random seed on client mount when no fixed seed is supplied (hydration-safe)
   useEffect(() => {
@@ -42,6 +46,38 @@ export default function ScrollDrawLine({
     }
   }, [seed]);
 
+  // Respect prefers-reduced-motion dynamically
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Automatically gate rendering to tall scrollable pages (scrollHeight > innerHeight * 1.35)
+  useEffect(() => {
+    const checkHeight = () => {
+      const scrollable = document.documentElement.scrollHeight;
+      const viewport = window.innerHeight;
+      setMeetsHeightThreshold(viewport > 0 && scrollable > viewport * HEIGHT_THRESHOLD_RATIO);
+    };
+
+    checkHeight();
+    window.addEventListener('resize', checkHeight);
+
+    const observer =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => checkHeight())
+        : null;
+    observer?.observe(document.body);
+
+    return () => {
+      window.removeEventListener('resize', checkHeight);
+      observer?.disconnect();
+    };
+  }, []);
+
   // Generate path once per active seed
   const pathD = useMemo(() => {
     if (activeSeed === null) return '';
@@ -50,18 +86,23 @@ export default function ScrollDrawLine({
 
   // Measure path length after render
   useEffect(() => {
-    if (!pathD || !pathRef.current) return;
+    if (!meetsHeightThreshold || !pathD || !pathRef.current) return;
     const len = pathRef.current.getTotalLength();
     setPathLength(len);
     pathRef.current.style.strokeDasharray = `${len}`;
-    pathRef.current.style.strokeDashoffset = `${len}`;
-  }, [pathD]);
+    pathRef.current.style.strokeDashoffset = reducedMotion ? '0' : `${len}`;
+  }, [pathD, meetsHeightThreshold, reducedMotion]);
 
-  // Continuous rAF loop with slow-then-fast catch-up
+  // Continuous rAF loop with slow-then-fast catch-up (disabled under prefers-reduced-motion)
   useEffect(() => {
-    if (pathLength === 0 || !pathRef.current) return;
+    if (!meetsHeightThreshold || pathLength === 0 || !pathRef.current) return;
 
     const path = pathRef.current;
+
+    if (reducedMotion) {
+      path.style.strokeDashoffset = '0';
+      return;
+    }
 
     const animate = () => {
       const scrollTop = window.scrollY;
@@ -72,7 +113,7 @@ export default function ScrollDrawLine({
         targetProgress = Math.min(Math.max(scrollTop / docHeight, 0), 1);
       }
 
-      // Detect new scroll input → reset the ramp timer
+      // Detect new scroll input -> reset the ramp timer
       if (Math.abs(targetProgress - prevTarget.current) > 0.003) {
         catchUpStart.current = performance.now();
         prevTarget.current = targetProgress;
@@ -95,12 +136,17 @@ export default function ScrollDrawLine({
 
     rafId.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId.current);
-  }, [pathLength]);
+  }, [pathLength, meetsHeightThreshold, reducedMotion]);
+
+  if (!meetsHeightThreshold) {
+    return null;
+  }
 
   // Soft horizontal content-column mask: full crispness in the outer gutters,
-  // smoothly dissolving to a faint atmospheric whisper behind the centered max-w-2xl text column.
+  // smoothly feathering across the edge of the centered max-w-2xl column so wide
+  // outer loops visibly dissolve into the text without hurting legibility.
   const contentMask =
-    'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) max(0px, calc(50% - 410px)), rgba(0,0,0,0.22) max(0px, calc(50% - 280px)), rgba(0,0,0,0.22) min(100%, calc(50% + 280px)), rgba(0,0,0,1) min(100%, calc(50% + 410px)), rgba(0,0,0,1) 100%)';
+    'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) max(0px, calc(50% - 375px)), rgba(0,0,0,0.1) max(0px, calc(50% - 210px)), rgba(0,0,0,0.1) min(100%, calc(50% + 210px)), rgba(0,0,0,1) min(100%, calc(50% + 375px)), rgba(0,0,0,1) 100%)';
 
   return (
     <div
@@ -132,7 +178,7 @@ export default function ScrollDrawLine({
             strokeWidth="2"
             style={{
               stroke: 'var(--color-scribble)',
-              strokeOpacity: 'var(--scribble-opacity)',
+              strokeOpacity: reducedMotion ? 'calc(var(--scribble-opacity) * 0.65)' : 'var(--scribble-opacity)',
               transition: 'stroke 0.25s ease, stroke-opacity 0.25s ease',
             }}
             strokeLinecap="round"

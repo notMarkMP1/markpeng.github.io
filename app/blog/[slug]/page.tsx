@@ -65,30 +65,30 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
         <>
             <ScrollDrawLine />
             <article className="relative z-10 container max-w-2xl mx-auto px-4 py-4 sm:px-6">
-                <div className="flex justify-between items-baseline gap-4">
-                    <h1 className="text-3xl font-bold font-heading text-[var(--color-text-primary)]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-2 sm:gap-4">
+                    <h1 className="text-[1.95rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">
                         {post.metadata.title}
                     </h1>
                     <Link 
                         href="/blog" 
-                        className="shrink-0 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors duration-200 flex items-center gap-1"
+                        className="shrink-0 text-[13px] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors duration-200 flex items-center gap-1"
                     >
                         <span className="underline underline-offset-4">← go back</span>
                     </Link>
                 </div>
                 {post.metadata.description && (
-                    <p className="text-[var(--color-text-secondary)] text-base mt-1 mb-2">
+                    <p className="text-[var(--color-text-secondary)] text-[15.5px] leading-relaxed mt-2 mb-2.5">
                         {post.metadata.description}
                     </p>
                 )}
-                <div className="text-sm text-[var(--color-text-muted)] flex flex-wrap justify-between items-center gap-2 mb-3">
+                <div className="font-meta text-xs text-[var(--color-text-muted)] flex flex-wrap justify-between items-center gap-2 mb-3.5">
                     <p>Published on {formatDate(post.metadata.publishedAt)}</p>
                     {shouldShowLastModified && (
                         <p>Last modified on {formatDate(post.metadata.lastModifiedAt)}</p>
                     )}
                 </div>
                 <hr className="border-[var(--color-border)] mb-6" />
-                <div className="prose prose-lg max-w-none">
+                <div className="prose max-w-none">
                     <MDXRemote 
                         source={post.content}
                         components={components}
