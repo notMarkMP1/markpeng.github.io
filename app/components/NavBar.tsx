@@ -22,7 +22,9 @@ export default function NavBar() {
   };
 
   return (
-    <nav className="relative z-20 flex justify-center items-center p-4">
+    // On `/` only, `.home-nav` remaps the semantic tokens to sky-legible ink
+    // (theme-keyed in globals.css, cross-fading on the hero's 520ms curve).
+    <nav className={`relative z-20 flex justify-center items-center p-4${isHome ? ' home-nav' : ''}`}>
       <div className="flex justify-center items-center space-x-2 sm:space-x-4">
         {navItems.map((item) => {
           const active = isActive(item.path);
@@ -41,7 +43,11 @@ export default function NavBar() {
                 <motion.div
                   className="absolute inset-0 rounded-lg -z-10"
                   layoutId="bubble"
-                  style={{ backgroundColor: 'var(--color-surface-elevated)' }}
+                  style={{
+                    backgroundColor: 'var(--color-surface-elevated)',
+                    backdropFilter: isHome ? 'blur(6px)' : undefined,
+                    WebkitBackdropFilter: isHome ? 'blur(6px)' : undefined,
+                  }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -52,15 +58,11 @@ export default function NavBar() {
           );
         })}
 
-        {!isHome && (
-          <>
-            <span
-              className="mx-1 h-4 w-px bg-[var(--color-border)]"
-              aria-hidden="true"
-            />
-            <ThemeToggle />
-          </>
-        )}
+        <span
+          className="mx-1 h-4 w-px bg-[var(--color-border)]"
+          aria-hidden="true"
+        />
+        <ThemeToggle />
       </div>
     </nav>
   );

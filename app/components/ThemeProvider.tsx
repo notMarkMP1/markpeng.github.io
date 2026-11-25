@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
 
 export type Theme = 'light' | 'dark';
 
@@ -31,7 +30,6 @@ function applyThemeToDocument(next: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [theme, setThemeState] = useState<Theme>('dark');
 
   // Sync React state with the pre-hydration theme applied by the inline <head> script
@@ -62,16 +60,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     mediaQuery.addEventListener('change', handleSystemChange);
     return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, []);
-
-  // Keep homepage (`/`) pinned to its dark WaterShader backdrop until Phase 6
-  useEffect(() => {
-    const root = document.documentElement;
-    if (pathname === '/') {
-      root.dataset.home = 'true';
-    } else {
-      delete root.dataset.home;
-    }
-  }, [pathname]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

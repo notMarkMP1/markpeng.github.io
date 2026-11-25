@@ -97,8 +97,8 @@ After prototyping 6 layouts live with Mark's real photos (`Margin Prints`, `Sing
 Strictly preserve the existing 4 routes:
 
 ### 1. Home (`/`) — [app/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/page.tsx)
-* **Current Scope (Phases 1–5):** Keep largely untouched — existing `WaterShader` canvas, centered greeting, short bio line, Resume / LinkedIn / GitHub icon links, and "play with the shader" controls. Apply at most minor cleanup if needed for layout consistency.
-* **Future Scope (Phase 6 — TBD):** Full *Nurture*-inspired Hero Overhaul. Intentionally deferred so secondary pages, theming, and visual craft are nailed first.
+* **Current Scope (Phases 1–5):** Keeps the existing dark `WaterShader` baseline on `project-nurture` until Phase 6's final implementation lands.
+* **Phase 6 Spec (Drafted & Ready for Final Implementation):** See [hero.md](./hero.md) for the complete dual-theme *Nurture* Daylight meadow ↔ *Get Your Wish* Night mirror water stage specification, typography/button craft, zero-lag transition architecture, botanical grass upgrades, and mobile fallback strategy. Reference prototype snapshot (not to be merged into `project-nurture`): branch `proto/phase6-hero-draft`, commit `0d587a4`.
 
 ### 2. About (`/about`) — [app/components/AboutSection.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/AboutSection.tsx)
 * **Content Structure:** Keep the clean minimalist flow (`About` header → short intro → theme-matched 3-photo strip → `Timeline` → `Projects`).
@@ -150,8 +150,11 @@ Strictly preserve the existing 4 routes:
 * [x] Replaced rainbow tech pills with quiet dot-separated `IBM Plex Mono` metadata and replaced the jumpy floating hover image with inline `136×80` **Soft Lift** thumbnails in [Projects.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Projects.tsx).
 * [x] Added Quiet Ink SVG hover underlines (`.project-ink-underline`) and balanced vertical cadence (`sm:items-center sm:min-h-[96px]` on `Projects` rows + `last:mb-0` on `Timeline` items).
 
-### Phase 6 — Homepage (`/`) *Nurture* Hero Overhaul *(Future Scope — TBD)*
-* Dedicated design & brainstorming phase for drastically reimagining `/` in the *Nurture* spirit once Phases 1–5 are complete.
+### Phase 6 — Homepage (`/`) *Nurture* Hero Overhaul *(Spec Locked in [hero.md](./hero.md) — Ready for Final Implementation)*
+* [x] Explored 5 live interactive prototype iterations across Light (*Nurture* cerulean sky, cumulus clouds, rolling slightly-damp tall grass meadow) and Dark (*Get Your Wish* shallow obsidian mirror water stage with glowing waterline sky reflections and interactive cursor/click ripples).
+* [x] Preserved prototype snapshot safely off the final branch on `proto/phase6-hero-draft` (commit `0d587a4`) for reference only.
+* [x] Authored complete implementation & graphics-engineering spec in [hero.md](./hero.md) covering foreground craft (single-line sky-tinted atmospheric title, smooth borderless translucent buttons, original floating navbar), non-poly botanical/painterly grass upgrades, zero-latency pre-warmed GPU theme crossfade, and 3-tier mobile WebGL/analytical water fallback.
+* [ ] Final production implementation of `/` per [hero.md](./hero.md) and cleanup of legacy `WaterShader.jsx` / `shaders.ts`.
 
 ### Pre-Launch QA & Cleanup
 * Verify Light + Dark contrast (>= 4.5:1), responsive behavior (320px mobile → 1440px+ ultrawide), and `prefers-reduced-motion` across all 4 routes.

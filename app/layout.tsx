@@ -61,9 +61,6 @@ const themeInitScript = `
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
-    if (window.location.pathname === '/') {
-      root.dataset.home = 'true';
-    }
   } catch (e) {}
 })();
 `;
