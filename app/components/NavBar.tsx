@@ -24,7 +24,9 @@ export default function NavBar() {
   return (
     // On `/` only, `.home-nav` remaps the semantic tokens to sky-legible ink
     // (theme-keyed in globals.css, cross-fading on the hero's 520ms curve).
-    <nav className={`relative z-20 flex justify-center items-center p-4${isHome ? ' home-nav' : ''}`}>
+    <nav
+      className={`relative z-20 flex justify-center items-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]${isHome ? ' home-nav' : ''}`}
+    >
       <div className="flex justify-center items-center space-x-2 sm:space-x-4">
         {navItems.map((item) => {
           const active = isActive(item.path);

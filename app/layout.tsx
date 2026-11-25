@@ -1,6 +1,6 @@
 import type React from "react"
 import "./globals.css"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Shippori_Mincho, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
 import NavBar from "./components/NavBar"
 import Footer from "./components/Footer"
@@ -24,6 +24,14 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500"],
   variable: "--font-plex-mono",
 })
+
+// viewport-fit=cover lets the home hero continue under iOS Safari's floating
+// toolbar (safe-area insets keep the nav clear of notches / the status bar)
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
 
 export const metadata: Metadata = {
   title: {

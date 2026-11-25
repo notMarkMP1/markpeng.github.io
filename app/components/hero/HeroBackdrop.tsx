@@ -5,7 +5,7 @@
  */
 export default function HeroBackdrop() {
   return (
-    <div aria-hidden="true" className="hero-backdrop pointer-events-none fixed inset-0 z-0">
+    <div aria-hidden="true" className="hero-backdrop pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh">
       <div className="hero-backdrop-night absolute inset-0" />
       <div className="hero-backdrop-day absolute inset-0" />
     </div>

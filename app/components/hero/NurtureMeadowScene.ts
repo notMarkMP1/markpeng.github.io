@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { MeadowQuality } from './capabilities';
+import { GAMUT_GLSL, gamutDefines } from './gamut';
 import { applyFraming, type CameraFraming, type FramingResult } from './framing';
 import type { HeroFrameOptions, HeroInput, HeroScene } from './types';
 
@@ -370,6 +371,8 @@ const skyVertexShader = /* glsl */ `
 `;
 
 const skyFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   uniform float uTime;
   uniform vec2 uResolution;
   uniform float uHorizonShift;
@@ -382,7 +385,7 @@ const skyFragmentShader = /* glsl */ `
   float cloudPuff(vec2 p, vec2 center, vec2 radii, float fbmNoise, float detail) {
     vec2 q = (p - center) / (radii * uCloudScale);
     float d = length(q) - 1.0 + (fbmNoise - 0.5) * detail;
-    return smoothstep(0.18, -0.22, d);
+    return (1.0 - smoothstep(-0.22, 0.18, d));
   }
 
   // Cumulus banks + drifting wisps. Noise only ever widens a puff by up to
@@ -443,7 +446,7 @@ const skyFragmentShader = /* glsl */ `
       float nFine = fbmS(cp * 4.8 - vec2(drift * 2.2, 0.4));
       float nCloud = nLarge * 0.68 + nFine * 0.32;
 
-      float lowBand = smoothstep(0.44, 0.28, uv.y) * smoothstep(0.38, 0.72, nLarge) * 0.38;
+      float lowBand = (1.0 - smoothstep(0.28, 0.44, uv.y)) * smoothstep(0.38, 0.72, nLarge) * 0.38;
       float cloudAlpha = clamp(cumulus(cp, aspect, t, nCloud) + lowBand * 0.32, 0.0, 1.0);
 
       float shadeSample = fbmS((cp + vec2(0.0, 0.06)) * 2.4 - vec2(drift * 1.4, 0.0));
@@ -458,7 +461,7 @@ const skyFragmentShader = /* glsl */ `
       finalSky = mix(sky, cloudCol, cloudAlpha * 0.94);
     }
     finalSky += (hashS(gl_FragCoord.xy + fract(t) * 31.0) - 0.5) / 255.0;
-    gl_FragColor = vec4(finalSky, 1.0);
+    gl_FragColor = vec4(outputGamut(finalSky), 1.0);
   }
 `;
 
@@ -478,6 +481,8 @@ const groundVertexShader = /* glsl */ `
 `;
 
 const groundFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying vec3 vWorld;
   varying float vDist;
 
@@ -505,7 +510,7 @@ const groundFragmentShader = /* glsl */ `
 
     col = applyMeadowHaze(col, vDist);
     col += (hashS(gl_FragCoord.xy + 3.1) - 0.5) / 255.0;
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(outputGamut(col), 1.0);
   }
 `;
 
@@ -615,7 +620,7 @@ const grassVertexShader = /* glsl */ `
     vW = W;
 
     float sunVis = 1.0 - cloudShadowMask(worldPos.xz, t);
-    float nearLens = smoothstep(5.2, 2.2, dist);
+    float nearLens = (1.0 - smoothstep(2.2, 5.2, dist));
     vData = vec4(position.x * 2.0, h, sunVis, nearLens);
 
     float bendMag = length(spring);
@@ -628,6 +633,8 @@ const grassVertexShader = /* glsl */ `
 `;
 
 const grassFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying vec3 vWorld;
   varying vec3 vN;
   varying vec3 vW;
@@ -647,7 +654,9 @@ const grassFragmentShader = /* glsl */ `
 
     // Soft alpha-to-coverage edges; foreground wisps feather like a shallow lens
     float edge = 1.0 - abs(across);
-    float aaw = min(fwidth(across) * 1.2, 0.6);
+    // (edge widths kept > 0: smoothstep with equal edges is undefined, and Apple
+    // GPUs really do return garbage for it)
+    float aaw = clamp(fwidth(across) * 1.2, 1e-4, 0.6);
     float alpha = smoothstep(0.0, aaw + nearLens * 0.6, edge);
 
     // Curved cylindrical cross-blade normal (±35°) with a subtle central spine crease
@@ -696,7 +705,7 @@ const grassFragmentShader = /* glsl */ `
     col = mix(col, col * 1.06 + vec3(0.025, 0.028, 0.008), nearLens * 0.55);
 
     col = applyMeadowHaze(col, vFx.w);
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(outputGamut(col), alpha);
   }
 `;
 
@@ -757,11 +766,13 @@ const plumeVertexShader = /* glsl */ `
 
     vWorld = worldPos;
     vData = vec4(position.x * 2.0, h, headT, aRoot.w);
-    vLight = vec4(1.0 - cloudShadowMask(worldPos.xz, t), dist, macroWarmth(root.xz), smoothstep(3.4, 1.5, dist));
+    vLight = vec4(1.0 - cloudShadowMask(worldPos.xz, t), dist, macroWarmth(root.xz), (1.0 - smoothstep(1.5, 3.4, dist)));
   }
 `;
 
 const plumeFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying vec3 vWorld;
   varying vec4 vData;
   varying vec4 vLight;
@@ -780,7 +791,7 @@ const plumeFragmentShader = /* glsl */ `
     float alpha;
     vec3 albedo;
     if (h < ${PLUME_HEAD_START.toFixed(2)}) {
-      float aaw = min(fwidth(across) * 1.2, 0.6);
+      float aaw = clamp(fwidth(across) * 1.2, 1e-4, 0.6);
       alpha = smoothstep(0.0, aaw, 1.0 - u);
       albedo = mix(vec3(0.30, 0.50, 0.22), vec3(0.62, 0.66, 0.36), smoothstep(0.2, ${PLUME_HEAD_START.toFixed(2)}, h));
     } else {
@@ -788,7 +799,7 @@ const plumeFragmentShader = /* glsl */ `
       float fuzz = noiseS(vec2(headT * 34.0 + seed * 40.0, u * 5.0));
       float body = 1.0 - smoothstep(0.38, 0.92, u + (fuzz - 0.5) * 0.42);
       float strands = smoothstep(0.62, 0.98, sin(headT * 96.0 - u * 16.0 + seed * 23.0) * 0.5 + 0.5);
-      strands *= (1.0 - u * u) * smoothstep(0.02, 0.2, headT) * smoothstep(1.0, 0.82, headT);
+      strands *= (1.0 - u * u) * smoothstep(0.02, 0.2, headT) * (1.0 - smoothstep(0.82, 1.0, headT));
       alpha = max(body, strands * 0.9);
       albedo = mix(vec3(0.56, 0.6, 0.32), vec3(0.84, 0.78, 0.54), smoothstep(0.0, 0.7, headT) * (1.0 - u * 0.4));
     }
@@ -807,7 +818,7 @@ const plumeFragmentShader = /* glsl */ `
     col += albedo * vec3(1.05, 0.96, 0.6) * back * (0.22 + headT * 0.55) * sunLight;
 
     col = applyMeadowHaze(col, vLight.y);
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(outputGamut(col), alpha);
   }
 `;
 
@@ -883,6 +894,8 @@ const flowerVertexShader = /* glsl */ `
 `;
 
 const flowerFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying vec3 vWorld;
   varying vec4 vData;
   varying vec4 vLight;
@@ -898,7 +911,7 @@ const flowerFragmentShader = /* glsl */ `
 
     if (vData.z < 0.5) {
       float u = abs(vLight.w);
-      alpha = smoothstep(0.0, min(fwidth(vLight.w) * 1.2, 0.6), 1.0 - u);
+      alpha = smoothstep(0.0, clamp(fwidth(vLight.w) * 1.2, 1e-4, 0.6), 1.0 - u);
       col = vec3(0.24, 0.46, 0.2) * (0.72 + 0.3 * sunLight);
     } else {
       vec2 p = vData.xy;
@@ -909,7 +922,7 @@ const flowerFragmentShader = /* glsl */ `
       if (vData.w < 0.5) {
         // Buttercup: five rounded glossy petals around a green-gold boss
         float petalR = 0.70 + 0.26 * pow(abs(cos(a * 2.5)), 0.6);
-        alpha = smoothstep(petalR, petalR - aa, r);
+        alpha = (1.0 - smoothstep(petalR - aa, petalR, r));
         vec3 petal = mix(vec3(0.98, 0.80, 0.16), vec3(1.0, 0.92, 0.38), smoothstep(0.2, 0.75, r));
         float gloss = exp(-pow((r - 0.5) * 5.0, 2.0)) * smoothstep(0.2, 1.0, cos(a - 2.2));
         petal += vec3(0.22, 0.2, 0.1) * gloss;
@@ -919,7 +932,7 @@ const flowerFragmentShader = /* glsl */ `
         // Daisy: many slender white rays around a golden disc
         float rays = pow(abs(cos(a * 8.0 + vLight.z * 6.0)), 0.45);
         float petalR = 0.58 + 0.38 * rays;
-        alpha = smoothstep(petalR, petalR - aa, r);
+        alpha = (1.0 - smoothstep(petalR - aa, petalR, r));
         vec3 petal = mix(vec3(0.84, 0.85, 0.9), vec3(0.95, 0.95, 0.93), smoothstep(0.25, 0.7, r));
         vec3 disc = mix(vec3(0.96, 0.74, 0.14), vec3(0.88, 0.6, 0.1), smoothstep(0.0, 0.22, r));
         col = mix(disc, petal, smoothstep(0.24, 0.32, r));
@@ -930,7 +943,7 @@ const flowerFragmentShader = /* glsl */ `
     }
 
     col = applyMeadowHaze(col, vLight.y);
-    gl_FragColor = vec4(col, alpha);
+    gl_FragColor = vec4(outputGamut(col), alpha);
   }
 `;
 
@@ -962,19 +975,21 @@ const petalsVertexShader = /* glsl */ `
 `;
 
 const petalsFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying float vKind;
   varying float vAlpha;
 
   void main() {
     vec2 c = gl_PointCoord - 0.5;
     float d = length(vec2(c.x * 0.85, c.y * 1.35));
-    float alpha = smoothstep(0.5, 0.14, d) * vAlpha;
+    float alpha = (1.0 - smoothstep(0.14, 0.5, d)) * vAlpha;
     if (alpha < 0.02) discard;
 
     vec3 yellowPetal = vec3(1.0, 0.93, 0.42);
     vec3 whiteMote = vec3(1.0, 1.0, 0.97);
     vec3 col = mix(yellowPetal, whiteMote, step(0.55, vKind));
-    gl_FragColor = vec4(col, alpha * 0.84);
+    gl_FragColor = vec4(outputGamut(col), alpha * 0.84);
   }
 `;
 
@@ -993,16 +1008,18 @@ const pollenVertexShader = /* glsl */ `
 `;
 
 const pollenFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   varying float vAlpha;
 
   void main() {
     if (vAlpha < 0.01) discard;
     vec2 c = gl_PointCoord - 0.5;
     float d = length(c);
-    float core = smoothstep(0.5, 0.0, d);
+    float core = (1.0 - smoothstep(0.0, 0.5, d));
     float alpha = core * core * vAlpha;
     if (alpha < 0.01) discard;
-    gl_FragColor = vec4(mix(vec3(1.0, 0.9, 0.48), vec3(1.0, 0.99, 0.9), core), alpha);
+    gl_FragColor = vec4(outputGamut(mix(vec3(1.0, 0.9, 0.48), vec3(1.0, 0.99, 0.9), core)), alpha);
   }
 `;
 
@@ -1448,7 +1465,9 @@ export function createNurtureMeadowScene(
   let preparedFlora = prepared;
   const useFbo = quality.springRes > 0;
   const springRes = quality.springRes;
-  const defines: Record<string, string> = {};
+  // Wide-gamut output for every colour pass (never the physics sim)
+  const gamut = gamutDefines(quality.p3Vivid);
+  const defines: Record<string, string> = { ...gamut };
   if (useFbo) defines.USE_SPRING_FBO = '';
 
   const scene = new THREE.Scene();
@@ -1508,6 +1527,7 @@ export function createNurtureMeadowScene(
   const skyMaterial = new THREE.ShaderMaterial({
     vertexShader: skyVertexShader,
     fragmentShader: skyFragmentShader,
+    defines: gamut,
     depthWrite: false,
     // Drawn last at the far plane: early-z skips every sky pixel behind the meadow
     depthTest: true,
@@ -1539,6 +1559,7 @@ export function createNurtureMeadowScene(
   const groundMaterial = new THREE.ShaderMaterial({
     vertexShader: groundVertexShader,
     fragmentShader: groundFragmentShader,
+    defines: gamut,
     toneMapped: false,
     uniforms: { uTime: shared.uTime, uSunDir: shared.uSunDir },
   });
@@ -1629,6 +1650,7 @@ export function createNurtureMeadowScene(
   const petalsMaterial = new THREE.ShaderMaterial({
     vertexShader: petalsVertexShader,
     fragmentShader: petalsFragmentShader,
+    defines: gamut,
     transparent: true,
     depthWrite: false,
     toneMapped: false,
@@ -1658,6 +1680,7 @@ export function createNurtureMeadowScene(
   const pollenMaterial = new THREE.ShaderMaterial({
     vertexShader: pollenVertexShader,
     fragmentShader: pollenFragmentShader,
+    defines: gamut,
     transparent: true,
     depthWrite: false,
     toneMapped: false,

@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import {
   buildQuality,
+  compactMaxDpr,
   detectEnvironment,
   probeRenderer,
   resolveTier,
@@ -15,6 +16,7 @@ import {
 import { createCompositePass, HERO_TRANSITION_MS, heroEase, themeToDawn, type CompositorPass } from './compositor';
 import { createNightWaterStage } from './NightWaterStage';
 import { createNurtureMeadowScene, prepareMeadowFlora, type PreparedMeadowFlora } from './NurtureMeadowScene';
+import HeroDebugHud, { readHeroDebugFlag, type HeroDebugInfo } from './HeroDebugHud';
 import { createHeroInput, IDLE_INPUT, type HeroInput, type HeroScene, type HeroTheme } from './types';
 
 /*
@@ -108,9 +110,10 @@ interface CompositorProps {
   input: HeroInput;
   reducedMotion: boolean;
   onFirstFrame: () => void;
+  debug: HeroDebugInfo | null;
 }
 
-function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame }: CompositorProps) {
+function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame, debug }: CompositorProps) {
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
@@ -402,6 +405,11 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
       state.firstFrameSent = true;
       onFirstFrame();
     }
+    if (debug && debug.frames++ % 30 === 0) {
+      const buffer = gl.getDrawingBufferSize(new THREE.Vector2());
+      debug.lines.dpr = `${gl.getPixelRatio().toFixed(2)} (${buffer.x}x${buffer.y})`;
+      debug.lines.idlePacing = every > 1 ? `every ${every}` : 'off';
+    }
 
     // ---- Frame-time governor -----------------------------------------------------
     // A weaker GPU that can't hold ~42 fps at rest steps the render resolution down
@@ -450,6 +458,7 @@ export default function HeroCanvas() {
   const themeRef = useRef<HeroTheme>('dark');
   const inputRef = useRef<HeroInput>(createHeroInput());
   const invalidateRef = useRef<(() => void) | null>(null);
+  const [debug] = useState<HeroDebugInfo | null>(() => (readHeroDebugFlag() ? { frames: 0, lines: {} } : null));
 
   useEffect(() => {
     themeRef.current = readTheme();
@@ -570,11 +579,14 @@ export default function HeroCanvas() {
   const compact = env.isCompact || env.isTouch;
 
   return (
+    // Full large-viewport height so the scene continues under mobile browser bars.
+    // iOS 26 Safari clips *opaque* fixed layers at its floating toolbar (and paints a
+    // flat tint there); a 0.99-opacity layer is composited separately and isn't.
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh overflow-hidden"
       style={{
-        opacity: visible ? 1 : 0,
+        opacity: visible ? (env.isTouch ? 0.99 : 1) : 0,
         transition: reducedMotion ? 'none' : `opacity ${CANVAS_FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
@@ -582,7 +594,7 @@ export default function HeroCanvas() {
         <Canvas
           flat
           linear
-          dpr={compact ? [1, 1.25] : [1, 1.75]}
+          dpr={compact ? [1, compactMaxDpr(env)] : [1, 1.75]}
           frameloop={reducedMotion ? 'demand' : 'always'}
           gl={{
             antialias: true,
@@ -610,8 +622,27 @@ export default function HeroCanvas() {
               },
               { once: true }
             );
+            // Wide gamut only where the canvas can really be tagged Display P3;
+            // otherwise the shaders keep plain sRGB output (never double-converted)
+            let p3Vivid = env.p3Vivid;
+            const ctx = gl.getContext() as WebGL2RenderingContext & { drawingBufferColorSpace?: string };
+            if (p3Vivid >= 0) {
+              if ('drawingBufferColorSpace' in ctx) ctx.drawingBufferColorSpace = 'display-p3';
+              if (ctx.drawingBufferColorSpace !== 'display-p3') p3Vivid = -1;
+            }
+            const built = buildQuality({ ...env, p3Vivid }, resolved);
+            if (debug) {
+              Object.assign(debug.lines, {
+                tier: `${resolved}${built.compact ? ' compact' : ''}${env.constrained ? ' constrained' : ''}`,
+                gamut: p3Vivid >= 0 ? `display-p3 (vivid ${p3Vivid})` : 'srgb',
+                msaa: `${ctx.getParameter(ctx.SAMPLES)}x default, targets ${built.msaa ? '4x' : 'off'}`,
+                waterSim: built.water.simRes || 'analytic',
+                cores: navigator.hardwareConcurrency || '?',
+                renderer: probe.rendererName || '?',
+              });
+            }
             setTier(resolved);
-            setQuality(buildQuality(env, resolved));
+            setQuality(built);
           }}
         >
           {quality && (
@@ -621,10 +652,12 @@ export default function HeroCanvas() {
               input={inputRef.current}
               reducedMotion={reducedMotion}
               onFirstFrame={() => setVisible(true)}
+              debug={debug}
             />
           )}
         </Canvas>
       </CanvasErrorBoundary>
+      {debug && <HeroDebugHud info={debug} />}
     </div>
   );
 }

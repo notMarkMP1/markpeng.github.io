@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { WaterQuality } from './capabilities';
+import { GAMUT_GLSL, gamutDefines } from './gamut';
 import { applyFraming, type CameraFraming, type FramingResult } from './framing';
 import type { HeroFrameOptions, HeroInput, HeroScene } from './types';
 
@@ -98,14 +99,14 @@ const SHARED_SKY_GLSL = /* glsl */ `
     if (sr > 0.968 && elev > 0.04) {
       float dist = length(sf);
       float twinkle = 0.68 + 0.32 * sin(uTime * (1.2 + sr * 2.5) + sr * 50.0);
-      float star = smoothstep(0.11, 0.01, dist) * twinkle * smoothstep(0.04, 0.22, elev);
+      float star = (1.0 - smoothstep(0.01, 0.11, dist)) * twinkle * smoothstep(0.04, 0.22, elev);
       col += vec3(0.76, 0.85, 1.0) * star * 0.55;
     }
 
     // Soft-edged luminous sky screen running right down to the waterline
     vec2 sc = vec2(az, elev - 0.005);
-    float panel = smoothstep(SCREEN_W + 0.06, SCREEN_W - 0.02, abs(sc.x))
-      * smoothstep(SCREEN_H + 0.055, SCREEN_H - 0.015, sc.y);
+    float panel = (1.0 - smoothstep(SCREEN_W - 0.02, SCREEN_W + 0.06, abs(sc.x)))
+      * (1.0 - smoothstep(SCREEN_H - 0.015, SCREEN_H + 0.055, sc.y));
 
     // The mirror hands back only what the screen emits (Fresnel dims it further),
     // so the sky is never darker than its own reflection
@@ -137,7 +138,7 @@ const SHARED_SKY_GLSL = /* glsl */ `
     col += vec3(0.1, 0.26, 0.55) * exp(-length(hq) * 2.2) * 0.4 * reflDim;
 
     // Faint seam where the screen meets the water
-    float seam = exp(-pow(elev * 40.0, 2.0)) * smoothstep(SCREEN_W + 0.05, SCREEN_W - 0.06, abs(sc.x));
+    float seam = exp(-pow(elev * 40.0, 2.0)) * (1.0 - smoothstep(SCREEN_W - 0.06, SCREEN_W + 0.05, abs(sc.x)));
     col += vec3(0.6, 0.85, 1.0) * seam * 0.16 * reflDim;
 
     return col;
@@ -259,6 +260,8 @@ const skyVertexShader = /* glsl */ `
 `;
 
 const skyFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   uniform float uTime;
   uniform mat4 uInvProj;
   uniform mat4 uCamMatrixWorld;
@@ -272,7 +275,7 @@ const skyFragmentShader = /* glsl */ `
     vec3 worldDir = normalize((uCamMatrixWorld * vec4(viewDir, 0.0)).xyz);
     // Below the horizon, match the far mirror apron exactly so the waterline is seamless
     vec3 col = evalGetYourWishSky(vec3(worldDir.x, max(worldDir.y, 0.005), worldDir.z), uTime, 0.0);
-    gl_FragColor = vec4(ditherOut(softClip(col), gl_FragCoord.xy, uTime), 1.0);
+    gl_FragColor = vec4(ditherOut(outputGamut(softClip(col)), gl_FragCoord.xy, uTime), 1.0);
   }
 `;
 
@@ -310,6 +313,8 @@ const waterVertexShader = /* glsl */ `
 `;
 
 const waterFragmentShader = /* glsl */ `
+  ${GAMUT_GLSL}
+
   uniform float uTime;
   uniform sampler2D uRippleMap;
   uniform float uSimTexel;
@@ -404,7 +409,7 @@ const waterFragmentShader = /* glsl */ `
     col += mix(iceBlue, crispSilver, 0.65) * lightGlint * 0.55;
     col += mix(iceBlue, crispSilver, 0.45) * (panelRim * 0.42 + fillRim * 0.18);
 
-    gl_FragColor = vec4(ditherOut(softClip(col), gl_FragCoord.xy, t), 1.0);
+    gl_FragColor = vec4(ditherOut(outputGamut(softClip(col)), gl_FragCoord.xy, t), 1.0);
   }
 `;
 
@@ -428,7 +433,8 @@ export function createNightWaterStage(
 ): HeroScene {
   const useFbo = quality.simRes > 0;
   const simRes = quality.simRes;
-  const defines: Record<string, string | number> = { SKY_OCTAVES: quality.skyOctaves };
+  // Shared by the sky + water colour passes (the wave sim has its own material)
+  const defines: Record<string, string | number> = { SKY_OCTAVES: quality.skyOctaves, ...gamutDefines(quality.p3Vivid) };
   if (useFbo) defines.USE_RIPPLE_FBO = '';
 
   const scene = new THREE.Scene();
