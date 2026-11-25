@@ -762,6 +762,49 @@ html[data-theme="dark"] .hero-overlay {
   }
 }
 
+/* Full-screen hero layers (CSS backdrop + WebGL canvas). Desktop keeps them fixed.
+   On touch devices they live in the document instead: iOS 26 Safari clips fixed
+   layers at its floating toolbar and paints a flat tint there, while ordinary page
+   content keeps flowing (visibly) underneath it. `/` never scrolls, so they hold
+   still either way; 100lvh also spares the canvas a resize as toolbars collapse. */
+.hero-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100lvh;
+}
+
+/* Safari tints its status-bar strip from a solid fixed element touching the top
+   edge; with the canvas no longer fixed on touch, this keeps that strip on the
+   scene's sky (or night void) instead of the page background. */
+.hero-top-tint {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #5f8fdc;
+  background-color: color(display-p3 0.36 0.56 0.87);
+  transition: background-color var(--hero-duration) var(--hero-ease);
+  pointer-events: none;
+}
+
+html[data-theme="dark"] .hero-top-tint {
+  background-color: #08090d;
+}
+
+@media (pointer: coarse) {
+  .hero-layer {
+    position: absolute;
+  }
+
+  .hero-top-tint {
+    display: block;
+  }
+}
+
 /* Tier 3 static backdrop + instant first-paint layer under the canvas */
 .hero-backdrop-day {
   background:

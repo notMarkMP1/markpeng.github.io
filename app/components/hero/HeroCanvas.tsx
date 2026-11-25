@@ -458,6 +458,7 @@ export default function HeroCanvas() {
   const themeRef = useRef<HeroTheme>('dark');
   const inputRef = useRef<HeroInput>(createHeroInput());
   const invalidateRef = useRef<(() => void) | null>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
   const [debug] = useState<HeroDebugInfo | null>(() => (readHeroDebugFlag() ? { frames: 0, lines: {} } : null));
 
   useEffect(() => {
@@ -481,9 +482,16 @@ export default function HeroCanvas() {
 
     // ---- Passive pointer / touch tracking (never preventDefault) -------------
     const input = inputRef.current;
+    // Relative to the canvas layer itself: on phones it is taller than the visible
+    // viewport (it runs on under the browser toolbar)
     const setNdc = (cx: number, cy: number) => {
-      input.ndc.x = (cx / window.innerWidth) * 2 - 1;
-      input.ndc.y = -(cy / window.innerHeight) * 2 + 1;
+      const rect = layerRef.current?.getBoundingClientRect();
+      const left = rect ? rect.left : 0;
+      const top = rect ? rect.top : 0;
+      const width = rect && rect.width > 0 ? rect.width : window.innerWidth;
+      const height = rect && rect.height > 0 ? rect.height : window.innerHeight;
+      input.ndc.x = ((cx - left) / width) * 2 - 1;
+      input.ndc.y = -((cy - top) / height) * 2 + 1;
     };
     const isInteractive = (t: EventTarget | null) =>
       t instanceof Element && !!t.closest('a, button, input, textarea, select, nav, [role="button"]');
@@ -579,14 +587,14 @@ export default function HeroCanvas() {
   const compact = env.isCompact || env.isTouch;
 
   return (
-    // Full large-viewport height so the scene continues under mobile browser bars.
-    // iOS 26 Safari clips *opaque* fixed layers at its floating toolbar (and paints a
-    // flat tint there); a 0.99-opacity layer is composited separately and isn't.
+    // .hero-layer: fixed on desktop, in-document on touch so the scene continues
+    // under iOS Safari's floating toolbar (see globals.css)
     <div
+      ref={layerRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-0 h-lvh overflow-hidden"
+      className="hero-layer pointer-events-none z-0 overflow-hidden"
       style={{
-        opacity: visible ? (env.isTouch ? 0.99 : 1) : 0,
+        opacity: visible ? 1 : 0,
         transition: reducedMotion ? 'none' : `opacity ${CANVAS_FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
