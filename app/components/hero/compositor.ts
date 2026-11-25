@@ -88,11 +88,11 @@ const compositeFragmentShader = /* glsl */ `
     float sweep;
     if (uDawn > 0.5) {
       // Normalised distance from the horizon (0 on the line, 1 at screen edge).
-      // Below the horizon dawn travels twice as fast, so the meadow lights up right
-      // behind the horizon instead of lagging until the very end of the sweep.
+      // Below the horizon dawn travels four times as fast: the whole meadow lights
+      // up together with the horizon, and only the sky keeps the slow rise.
       float d = vUv.y > uHorizon
         ? (vUv.y - uHorizon) / max(1.0 - uHorizon, 0.001)
-        : (uHorizon - vUv.y) / max(uHorizon, 0.001) * 0.5;
+        : (uHorizon - vUv.y) / max(uHorizon, 0.001) * 0.25;
       d = d * 0.82 + wave;
       float edge = mix(-soft - 0.12, 1.0 + soft + 0.12, p);
       sweep = 1.0 - smoothstep(edge - soft, edge + soft, d);

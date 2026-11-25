@@ -25,6 +25,28 @@ export default function HeroDebugHud({ info }: { info: HeroDebugInfo }) {
   const ref = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
+    // Invisible probe for viewport units and safe-area insets (in CSS px)
+    const probe = document.createElement('div');
+    probe.style.cssText =
+      'position:fixed;top:0;left:0;width:0;visibility:hidden;pointer-events:none;' +
+      'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+    document.body.appendChild(probe);
+    const unit = (value: string) => {
+      probe.style.height = value;
+      return Math.round(probe.getBoundingClientRect().height - parseFloat(getComputedStyle(probe).paddingTop) - parseFloat(getComputedStyle(probe).paddingBottom));
+    };
+    const viewport = () => {
+      const cs = getComputedStyle(probe);
+      const vv = window.visualViewport;
+      const layer = document.querySelectorAll('.hero-layer')[1]?.getBoundingClientRect();
+      return {
+        view: `inner ${innerWidth}x${innerHeight} vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : '?'} screen ${screen.width}x${screen.height}`,
+        units: `svh ${unit('100svh')} lvh ${unit('100lvh')} dvh ${unit('100dvh')} vh ${unit('100vh')}`,
+        safe: `t${parseFloat(cs.paddingTop)} b${parseFloat(cs.paddingBottom)} l${parseFloat(cs.paddingLeft)} r${parseFloat(cs.paddingRight)}`,
+        page: `doc ${document.documentElement.scrollHeight} scrollY ${Math.round(scrollY)} layer ${layer ? `${Math.round(layer.top)}+${Math.round(layer.height)}` : '?'}`,
+      };
+    };
+
     let lastFrames = info.frames;
     let lastTime = performance.now();
     const id = window.setInterval(() => {
@@ -33,12 +55,15 @@ export default function HeroDebugHud({ info }: { info: HeroDebugInfo }) {
       lastFrames = info.frames;
       lastTime = now;
       if (ref.current) {
-        ref.current.textContent = Object.entries({ ...info.lines, fps: fps.toFixed(0) })
+        ref.current.textContent = Object.entries({ ...info.lines, ...viewport(), fps: fps.toFixed(0) })
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n');
       }
     }, 500);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      probe.remove();
+    };
   }, [info]);
 
   return (
