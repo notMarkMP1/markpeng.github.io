@@ -14,7 +14,7 @@ import {
 } from './capabilities';
 import { createCompositePass, HERO_TRANSITION_MS, heroEase, themeToDawn, type CompositorPass } from './compositor';
 import { createNightWaterStage } from './NightWaterStage';
-import { createNurtureMeadowScene } from './NurtureMeadowScene';
+import { createNurtureMeadowScene, prepareMeadowFlora, type PreparedMeadowFlora } from './NurtureMeadowScene';
 import { createHeroInput, IDLE_INPUT, type HeroInput, type HeroScene, type HeroTheme } from './types';
 
 /*
@@ -33,10 +33,14 @@ const TARGET_LINGER_MS = 2400;
 const CANVAS_FADE_MS = 900;
 /** Startup grace before the frame-time governor may lower the render resolution. */
 const GOVERNOR_SETTLE_MS = 4000;
+/** Pointer/touch quiet time after which high-refresh displays pace the idle scene. */
+const IDLE_PACE_AFTER_MS = 3000;
 
 function readTheme(): HeroTheme {
   return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 }
+
+const noop = () => {};
 
 type IdleHandle = { cancel: () => void };
 
@@ -115,6 +119,8 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
   const stateRef = useRef<CompositorState | null>(null);
   // Frame-time governor state (see the end of useFrame)
   const governorRef = useRef({ settleUntil: 0, window: 0, slow: 0 });
+  // Idle pacing: recent rAF intervals (min ≈ display refresh), skipped-frame carry
+  const pacingRef = useRef({ deltas: new Float32Array(32), i: 0, skipped: 0, carry: 0 });
   const sizeRef = useRef(size);
   sizeRef.current = size;
 
@@ -141,21 +147,20 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
     governorRef.current.settleUntil = performance.now() + GOVERNOR_SETTLE_MS;
     const pendingCompiles: Promise<void>[] = [];
 
-    const build = (theme: HeroTheme): HeroScene => {
+    const build = (theme: HeroTheme, flora?: PreparedMeadowFlora): HeroScene => {
       const existing = state.scenes[theme];
       if (existing) return existing;
       const { width, height } = sizeRef.current;
       const created =
         theme === 'light'
-          ? createNurtureMeadowScene(gl, quality.meadow, width, height)
+          ? createNurtureMeadowScene(gl, quality.meadow, width, height, flora)
           : createNightWaterStage(gl, quality.water, width, height);
       state.scenes[theme] = created;
       return created;
     };
 
     const compile = (theme: HeroTheme, warm: boolean) => {
-      const target = build(theme);
-      const finish = () => {
+      const finish = (target: HeroScene) => {
         if (state.disposed) return;
         if (warm) {
           // One paused warmup frame: steps its FBO physics once, uploads every
@@ -189,9 +194,25 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
         state.ready[theme] = true;
         invalidate();
       };
-      pendingCompiles.push(gl.compileAsync(target.scene, target.camera).then(finish, finish));
+      const job = async () => {
+        // The meadow's grass is planted in idle slices first, so creating the
+        // scene is never one long main-thread task
+        let flora: PreparedMeadowFlora | undefined;
+        if (theme === 'light' && !state.scenes.light) {
+          const { width, height } = sizeRef.current;
+          flora = await prepareMeadowFlora(quality.meadow, width, height);
+          if (state.disposed) return;
+        }
+        const target = build(theme, flora);
+        const programs = [target, ...target.passes].map((p) => gl.compileAsync(p.scene, p.camera));
+        await Promise.all(programs).catch(noop);
+        finish(target);
+      };
+      pendingCompiles.push(job().catch(noop));
     };
 
+    // The sweep pass is first used mid-toggle: link it off the main thread up front
+    pendingCompiles.push(gl.compileAsync(state.pass.scene, state.pass.camera).then(noop, noop));
     compile(initial, false);
     const prewarm = scheduleIdle(() => {
       if (state.disposed) return;
@@ -260,8 +281,36 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
       state.direction = -1;
     }
 
+    // ---- Idle pacing -----------------------------------------------------------
+    // No pointer/touch for a few seconds and no sweep: high-refresh displays render
+    // every 2nd (240 Hz: 3rd) refresh, evenly paced at 60–83 fps. The ambient breeze,
+    // clouds and water shimmer move slowly enough to look identical, and the GPU
+    // does about half the work while the page just sits open. Any input or toggle
+    // returns to the full refresh rate on the very next frame.
+    const pacing = pacingRef.current;
+    pacing.deltas[pacing.i++ & 31] = delta;
+    let vsync = Infinity;
+    for (let k = 0; k < 32; k++) {
+      const d = pacing.deltas[k];
+      if (d > 0 && d < vsync) vsync = d;
+    }
+    const idle =
+      motion &&
+      state.direction === 0 &&
+      target === state.current &&
+      input.taps.length === 0 &&
+      now - input.lastActivity > IDLE_PACE_AFTER_MS;
+    const every = idle ? Math.min(3, Math.max(1, Math.round(1 / 75 / vsync))) : 1;
+    if (every > 1 && ++pacing.skipped < every) {
+      pacing.carry += delta;
+      return;
+    }
+    const frameDelta = delta + pacing.carry;
+    pacing.skipped = 0;
+    pacing.carry = 0;
+
     if (state.direction !== 0) {
-      state.linear += state.direction * ((Math.min(delta, 0.1) * 1000) / HERO_TRANSITION_MS);
+      state.linear += state.direction * ((Math.min(frameDelta, 0.1) * 1000) / HERO_TRANSITION_MS);
       if (state.linear >= 1) {
         state.current = state.to;
         state.direction = 0;
@@ -276,7 +325,7 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
     }
 
     // ---- Advance only the live scene(s); everything else stays paused -------
-    const dt = Math.min(delta, 0.05);
+    const dt = Math.min(frameDelta, 0.05);
     const options = { motion };
     if (state.direction !== 0) {
       const heading = state.direction === 1 ? state.to : state.from;
@@ -358,9 +407,10 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
     // A weaker GPU that can't hold ~42 fps at rest steps the render resolution down
     // a notch at a time (never back up during the visit, so it can't oscillate).
     const governor = governorRef.current;
-    if (motion && state.direction === 0 && now > governor.settleUntil && delta < 0.25) {
-      governor.window += delta;
-      if (delta > 1 / 42) governor.slow += delta;
+    // Judged on full-rate frames only: idle-paced intervals are slow on purpose
+    if (motion && every === 1 && state.direction === 0 && now > governor.settleUntil && frameDelta < 0.25) {
+      governor.window += frameDelta;
+      if (frameDelta > 1 / 42) governor.slow += frameDelta;
       if (governor.window >= 2) {
         const currentDpr = gl.getPixelRatio();
         if (governor.slow / governor.window > 0.6 && currentDpr > 1.01) {
@@ -429,6 +479,7 @@ export default function HeroCanvas() {
     const isInteractive = (t: EventTarget | null) =>
       t instanceof Element && !!t.closest('a, button, input, textarea, select, nav, [role="button"]');
     const pushTap = () => {
+      input.lastActivity = performance.now();
       if (input.taps.length < 4) input.taps.push({ x: input.ndc.x, y: input.ndc.y });
     };
 
@@ -437,6 +488,7 @@ export default function HeroCanvas() {
       setNdc(e.clientX, e.clientY);
       input.active = true;
       input.touch = false;
+      input.lastActivity = performance.now();
     };
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === 'touch' || isInteractive(e.target)) return;
@@ -463,6 +515,7 @@ export default function HeroCanvas() {
       setNdc(touch.clientX, touch.clientY);
       input.touch = true;
       input.active = true;
+      input.lastActivity = performance.now();
     };
     const onTouchEnd = (e: TouchEvent) => {
       if (e.touches.length === 0) input.active = false;
@@ -540,6 +593,9 @@ export default function HeroCanvas() {
           style={{ width: '100%', height: '100%', display: 'block' }}
           onCreated={({ gl, invalidate }) => {
             invalidateRef.current = invalidate;
+            // Shader diagnostics are synchronous GPU round-trips on every program's
+            // first use; keep them for development, skip them in production.
+            gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production';
             const probe = probeRenderer(gl);
             const resolved = resolveTier(env, probe);
             if (resolved === 3) {

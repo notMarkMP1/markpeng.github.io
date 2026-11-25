@@ -190,10 +190,11 @@ Generic Three.js `InstancedBufferGeometry` grass fails visually because every bl
 Even with a single persistent `<Canvas>`, prototype v5 unmounted `<NurtureGrassScene>` and mounted `<NightSeaScene>` on toggle. Mounting forced synchronous CPU buffer creation (11,200 grass instances), FBO allocation, and GLSL program compilation right when the user clicked the theme button (`~80–250ms` hitch), plus `preserveDrawingBuffer: true` + 2D canvas `drawImage` overhead.
 
 ### Required Final Architecture: Pre-Warmed Dual-Scene GPU Crossfade (< 16ms Toggle Latency)
-> **Known limitation (Nov 2026):** the very first toggle after a page load can still stall one frame (~110–190ms in Chrome on Windows/D3D11), more noticeably light → dark; later toggles stay ~18–24ms.
-> * A trace places it in Chrome's GPU-process DOM raster (`RendererRasterWorker` → `DoEndRasterCHROMIUM::Flush`), i.e. repainting the page's text/nav/buttons in the new theme, **not** in the WebGL scenes.
-> * The inactive scene, its full-size transition targets, and the sweep pass are all pre-warmed at idle.
-> * Not yet measured on a production build.
+> **Known limitation (updated Nov 2026, production build):** the very first toggle after a page load is smooth on the AMD Radeon 680M iGPU (≈18 ms frames both ways), but on the RTX 4050 it can still spend one ~80–160 ms frame; later toggles stay ~18–24 ms.
+> * The remainder is Chrome's GPU-process DOM raster (`RendererRasterWorker` → `DoEndRasterCHROMIUM::Flush`) repainting the page in the new theme, **not** the WebGL scenes. Hiding the whole overlay only reaches ~60–90 ms.
+> * Fixed so far:
+>   * Dark-mode `--hero-btn-lift` stays at `rgba(0,0,0,0.01)`, never fully transparent. Chrome skips 0-alpha shadows and then built their blur pipeline mid-toggle, which cost ~100 ms.
+>   * Every scene, simulation pass and the sweep pass are compiled asynchronously and pre-warmed at idle.
 1. **Fast Initial Paint + Idle Pre-Warming:**
    * On mount, initialize **only the active theme scene** immediately so initial LCP/TTI stays fast.
    * After first paint settles (`requestIdleCallback` or `~400–600ms` timeout), silently mount and pre-compile the **inactive** theme scene inside its own offscreen `THREE.Scene` (running `gl.compile(inactiveScene, inactiveCamera)` + 1 warmup frame for its FBOs) while keeping it **completely paused (`useFrame` early-returns)** whenever it is neither active nor transitioning.
@@ -261,6 +262,36 @@ app/components/hero/
 ├── NurtureMeadowScene.ts   # Painterly sky + clouds + botanical clumped meadow + cloud shadows + damp spring FBO
 └── NightWaterStage.ts      # Get Your Wish mirror water stage + shared analytical sky + FBO (Tier 1) & analytical ripples (Tier 2)
 ```
+
+### Production Performance Notes (Nov 2026 pass)
+Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Radeon 680M iGPU, pinned via `--use-adapter-luid`), GPU timer queries per frame, 4× CPU throttle as the phone proxy, and pixel-diffed reduced-motion stills (every change below is visually identical, PSNR ≥ 73 dB).
+
+**GPU (iGPU, 2520×1575 Retina-class):**
+* **Light at rest:** 14.4 → ~8.6–9.1 ms.
+* **Toggle sweep:** 26–30 → ~17 ms.
+* **Dark at rest:** ~4.4 → ~3.3 ms.
+
+**Draw-order and shading changes behind those numbers:**
+* **Sky drawn last:** each world's full-screen sky is drawn last with depth testing at the far plane, so early-z skips it behind the meadow/water. Opaque order is grass → plumes → flowers → ground → sky.
+* **Grass sorted nearest-first:** grass instances are bucket-sorted nearest-first at plant time so the depth test rejects hidden blades before shading. The A2C flora shaders no longer `discard`, since alpha-to-coverage already zeroes those samples and `discard` defeats early-z and HSR on tile GPUs.
+* **Exact shader early-outs:**
+  * The meadow sky skips all cloud FBM where no puff can reach (bounded by evaluating the cumulus shapes with noise = 0).
+  * The night sky skips the screen's cloud FBM outside the panel.
+  * The water skips micro-tension noise in fully calm far water.
+* **Per-vertex gust sheen:** the grass breeze-sheen noise is evaluated per vertex. Its bands span ~20 world units.
+* **What remains:** grass geometry/raster (thin far blades) is now the dominant cost and scales with blade count. Density was deliberately not reduced.
+
+**Main thread (load / first toggle):**
+* **Async shader compiles:** FBO simulation passes (`HeroScene.passes`) and the sweep pass compile asynchronously alongside the scenes. Their first use used to link synchronously and stalled the idle pre-warm by 90–210 ms.
+* **No production shader diagnostics:** production builds set `renderer.debug.checkShaderErrors = false`. These are synchronous GPU round-trips on each program's first use; development keeps them.
+* **Sliced grass planting:** grass planting is a resumable generator run in ~6 ms slices (`prepareMeadowFlora`). The meadow build fell from ~100–250 ms in one task to ~10–75 ms, with identical blades. Resize replants stay synchronous.
+* **Result on a 4×-throttled phone:** the longest load task fell from ~300–550 ms to ~100 ms. What remains is script parsing / hydration (three.js is ~176 KB gz in the lazy hero chunk).
+
+**Idle pacing:**
+* After 3 s without pointer/touch activity and with no sweep, 120–165 Hz displays render every 2nd refresh (240 Hz: every 3rd), evenly paced at 60–83 fps. This roughly halves idle GPU work.
+* Any input or toggle returns to full rate on the next frame. 60 Hz displays are unaffected.
+* The DPR governor only judges full-rate frames.
+* `IDLE_PACE_AFTER_MS` in `HeroCanvas.tsx` tunes it; `Infinity` disables it.
 
 ### Cleanup Notes
 * Once Mark signs off on the final Phase 6 hero, verify nothing else imports legacy `app/components/WaterShader.jsx` or `app/utils/shaders.ts` and remove them cleanly during Pre-Launch QA.

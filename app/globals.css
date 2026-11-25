@@ -684,7 +684,10 @@ html[data-theme="dark"] .hero-overlay {
   --hero-btn-icon: #a8c2e8;
   --hero-btn-arrow: #7f9bc4;
   --hero-btn-shadow: rgba(0, 0, 0, 0);
-  --hero-btn-lift: rgba(0, 0, 0, 0);
+  /* Invisible over the night stage but never fully transparent: Chrome skips drawing
+     a 0-alpha shadow, then built its blur pipeline mid-way through the first
+     toggle to light (~100 ms frame on some GPUs). Drawing it from page load avoids that. */
+  --hero-btn-lift: rgba(0, 0, 0, 0.01);
   --hero-focus: rgba(137, 176, 255, 0.55);
   --hero-title-shadow-a: rgba(0, 0, 0, 0);
   --hero-title-shadow-b: rgba(0, 0, 0, 0.45);

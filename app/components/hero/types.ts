@@ -15,6 +15,8 @@ export interface HeroInput {
   active: boolean;
   touch: boolean;
   taps: HeroTap[];
+  /** performance.now() of the last pointer / touch movement or tap. */
+  lastActivity: number;
 }
 
 export interface HeroFrameOptions {
@@ -30,6 +32,11 @@ export interface HeroFrameOptions {
 export interface HeroScene {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
+  /**
+   * Offscreen passes `update` renders (FBO physics). The compositor compiles them
+   * asynchronously with `scene`, so their first step never blocks on a shader link.
+   */
+  readonly passes: ReadonlyArray<{ scene: THREE.Scene; camera: THREE.Camera }>;
   /** Screen-space y (0 = bottom, 1 = top) of the horizon, for the transition sweep. */
   horizonUv(): number;
   resize(width: number, height: number): void;
@@ -38,7 +45,7 @@ export interface HeroScene {
 }
 
 export function createHeroInput(): HeroInput {
-  return { ndc: { x: 0, y: 0 }, active: false, touch: false, taps: [] };
+  return { ndc: { x: 0, y: 0 }, active: false, touch: false, taps: [], lastActivity: 0 };
 }
 
 export const IDLE_INPUT: HeroInput = Object.freeze({
@@ -46,4 +53,5 @@ export const IDLE_INPUT: HeroInput = Object.freeze({
   active: false,
   touch: false,
   taps: Object.freeze([]) as unknown as HeroTap[],
+  lastActivity: 0,
 }) as HeroInput;

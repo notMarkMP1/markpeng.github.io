@@ -107,26 +107,30 @@ const SHARED_SKY_GLSL = /* glsl */ `
     float panel = smoothstep(SCREEN_W + 0.06, SCREEN_W - 0.02, abs(sc.x))
       * smoothstep(SCREEN_H + 0.055, SCREEN_H - 0.015, sc.y);
 
-    // Drifting clouds in saturated blues: vivid at a luminance text can sit on
-    float cn = fbmSky(vec2(sc.x * 4.2 - uTime * 0.025, sc.y * 8.5));
-    vec3 screenCol = mix(vec3(0.2, 0.52, 0.98), vec3(0.6, 0.84, 1.0), smoothstep(0.32, 0.76, cn));
-
-    // The stage light, strongest at the centre; the clouds it passes through catch
-    // it unevenly. Above its peak it eases out along a long stretched-exponential
-    // tail instead of a Gaussian shoulder (no visible cut-off under the text), and
-    // only its tight core turns cyan, so the tail rises in saturated blue.
-    float dy = sc.y - LIGHT_Y + (cn - 0.5) * 0.03;
-    float ax = sc.x / LIGHT_X;
-    float across = mix(LIGHT_SIDE, 1.0, exp(-ax * ax));
-    float u = abs(dy) / (dy > 0.0 ? LIGHT_UP : LIGHT_DOWN);
-    float light = exp(-(dy > 0.0 ? pow(u, 1.6) : u * u)) * across;
-    float tu = dy / (dy > 0.0 ? LIGHT_TINT_UP : LIGHT_DOWN);
-    screenCol = mix(screenCol, vec3(0.58, 0.88, 1.0), exp(-tu * tu) * across * 0.5);
-
     // The mirror hands back only what the screen emits (Fresnel dims it further),
     // so the sky is never darker than its own reflection
     float reflDim = mix(1.0, 0.9, isReflection);
-    col += screenCol * panel * (0.36 + 0.62 * light) * reflDim;
+
+    // Outside the panel only the bloom and seam remain: skip the cloud noise there
+    if (panel > 0.0) {
+      // Drifting clouds in saturated blues: vivid at a luminance text can sit on
+      float cn = fbmSky(vec2(sc.x * 4.2 - uTime * 0.025, sc.y * 8.5));
+      vec3 screenCol = mix(vec3(0.2, 0.52, 0.98), vec3(0.6, 0.84, 1.0), smoothstep(0.32, 0.76, cn));
+
+      // The stage light, strongest at the centre; the clouds it passes through catch
+      // it unevenly. Above its peak it eases out along a long stretched-exponential
+      // tail instead of a Gaussian shoulder (no visible cut-off under the text), and
+      // only its tight core turns cyan, so the tail rises in saturated blue.
+      float dy = sc.y - LIGHT_Y + (cn - 0.5) * 0.03;
+      float ax = sc.x / LIGHT_X;
+      float across = mix(LIGHT_SIDE, 1.0, exp(-ax * ax));
+      float u = abs(dy) / (dy > 0.0 ? LIGHT_UP : LIGHT_DOWN);
+      float light = exp(-(dy > 0.0 ? pow(u, 1.6) : u * u)) * across;
+      float tu = dy / (dy > 0.0 ? LIGHT_TINT_UP : LIGHT_DOWN);
+      screenCol = mix(screenCol, vec3(0.58, 0.88, 1.0), exp(-tu * tu) * across * 0.5);
+
+      col += screenCol * panel * (0.36 + 0.62 * light) * reflDim;
+    }
 
     // Bloom spilling out of the panel into the void, centred on the light
     vec2 hq = vec2(sc.x, (sc.y - LIGHT_Y) / 0.32);
@@ -360,7 +364,8 @@ const waterFragmentShader = /* glsl */ `
     // Far water settles into a still, perfect mirror (no grazing-angle shimmer),
     // so the screen meets its own reflection exactly on the waterline
     float calm = smoothstep(16.0, 46.0, vDist);
-    vec2 microGrad = subtleMicroTension(vWorldPos.xz, t);
+    // Fully calm far water drops the micro-tension noise entirely
+    vec2 microGrad = calm < 1.0 ? subtleMicroTension(vWorldPos.xz, t) : vec2(0.0);
     vec2 totalGrad = (microGrad + rippleGrad) * (1.0 - calm);
 
     vec3 N = normalize(vec3(-totalGrad.x, 1.0, -totalGrad.y));
@@ -474,7 +479,8 @@ export function createNightWaterStage(
     fragmentShader: skyFragmentShader,
     defines,
     depthWrite: false,
-    depthTest: false,
+    // Drawn last at the far plane: early-z skips every sky pixel behind the water
+    depthTest: true,
     toneMapped: false,
     uniforms: {
       uTime: { value: 0 },
@@ -484,7 +490,7 @@ export function createNightWaterStage(
   });
   const skyQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyMaterial);
   skyQuad.frustumCulled = false;
-  skyQuad.renderOrder = -10;
+  skyQuad.renderOrder = 10;
   scene.add(skyQuad);
 
   // --- Mirror water --------------------------------------------------------
@@ -766,6 +772,7 @@ export function createNightWaterStage(
   return {
     scene,
     camera,
+    passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
     horizonUv: () => (framing.horizonNdc + 1) * 0.5,
     resize,
     update,

@@ -385,6 +385,31 @@ const skyFragmentShader = /* glsl */ `
     return smoothstep(0.18, -0.22, d);
   }
 
+  // Cumulus banks + drifting wisps. Noise only ever widens a puff by up to
+  // detail/2, so cumulus(cp, t, 0.0) == 0 proves no cloud can reach this pixel.
+  float cumulus(vec2 cp, float aspect, float t, float nCloud) {
+    // Right-side billowing cumulus bank
+    float cRight = 0.0;
+    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.49, 0.43), vec2(0.42, 0.23), nCloud, 0.55));
+    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.43, 0.56), vec2(0.28, 0.19), nCloud, 0.62));
+    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.32, 0.36), vec2(0.26, 0.14), nCloud, 0.58));
+    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.54, 0.67), vec2(0.24, 0.16), nCloud, 0.52));
+
+    // Left-side softer lower horizon clouds
+    float cLeft = 0.0;
+    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.48, 0.41), vec2(0.32, 0.16), nCloud, 0.58));
+    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.31, 0.34), vec2(0.22, 0.11), nCloud, 0.52));
+    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.52, 0.51), vec2(0.20, 0.12), nCloud, 0.56));
+
+    // Calm slow-drifting upper wisps
+    float driftX = mod(t * 0.015 + 1.2, 3.6) - 1.8;
+    float cDrift1 = cloudPuff(cp, vec2(driftX, 0.69), vec2(0.36, 0.085), nCloud, 0.72) * 0.40;
+    float driftX2 = mod(t * 0.010 + 2.9, 3.6) - 1.8;
+    float cDrift2 = cloudPuff(cp, vec2(driftX2, 0.82), vec2(0.28, 0.065), nCloud, 0.75) * 0.28;
+
+    return max(max(cRight, cLeft), max(cDrift1, cDrift2));
+  }
+
   void main() {
     float aspect = uResolution.x / max(uResolution.y, 1.0);
     vec2 uv = vec2(vUv.x, vUv.y - uHorizonShift);
@@ -408,44 +433,30 @@ const skyFragmentShader = /* glsl */ `
     sky += vec3(0.14, 0.18, 0.14) * sunGlow * 0.55;
 
     vec2 cp = vec2((uv.x - 0.5) * aspect, uv.y);
-    float drift = t * 0.010;
+    vec3 finalSky = sky;
 
-    float nLarge = fbmS(cp * 2.1 - vec2(drift * 1.4, 0.0));
-    float nFine = fbmS(cp * 4.8 - vec2(drift * 2.2, 0.4));
-    float nCloud = nLarge * 0.68 + nFine * 0.32;
+    // Open sky (no puff can reach it, above the low horizon band) skips all cloud
+    // noise; the result there is exactly the clear-sky gradient either way.
+    if (uv.y < 0.44 || cumulus(cp, aspect, t, 0.0) > 0.0) {
+      float drift = t * 0.010;
+      float nLarge = fbmS(cp * 2.1 - vec2(drift * 1.4, 0.0));
+      float nFine = fbmS(cp * 4.8 - vec2(drift * 2.2, 0.4));
+      float nCloud = nLarge * 0.68 + nFine * 0.32;
 
-    // Right-side billowing cumulus bank
-    float cRight = 0.0;
-    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.49, 0.43), vec2(0.42, 0.23), nCloud, 0.55));
-    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.43, 0.56), vec2(0.28, 0.19), nCloud, 0.62));
-    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.32, 0.36), vec2(0.26, 0.14), nCloud, 0.58));
-    cRight = max(cRight, cloudPuff(cp, vec2(aspect * 0.54, 0.67), vec2(0.24, 0.16), nCloud, 0.52));
+      float lowBand = smoothstep(0.44, 0.28, uv.y) * smoothstep(0.38, 0.72, nLarge) * 0.38;
+      float cloudAlpha = clamp(cumulus(cp, aspect, t, nCloud) + lowBand * 0.32, 0.0, 1.0);
 
-    // Left-side softer lower horizon clouds
-    float cLeft = 0.0;
-    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.48, 0.41), vec2(0.32, 0.16), nCloud, 0.58));
-    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.31, 0.34), vec2(0.22, 0.11), nCloud, 0.52));
-    cLeft = max(cLeft, cloudPuff(cp, vec2(-aspect * 0.52, 0.51), vec2(0.20, 0.12), nCloud, 0.56));
+      float shadeSample = fbmS((cp + vec2(0.0, 0.06)) * 2.4 - vec2(drift * 1.4, 0.0));
+      float topLight = smoothstep(0.30, 0.68, uv.y) * 0.45 + (1.0 - shadeSample) * 0.55;
+      vec3 cloudShadow = vec3(0.765, 0.865, 0.950);
+      vec3 cloudLit = vec3(0.992, 0.996, 0.988);
+      vec3 cloudCol = mix(cloudShadow, cloudLit, clamp(topLight, 0.0, 1.0));
 
-    // Calm slow-drifting upper wisps
-    float driftX = mod(t * 0.015 + 1.2, 3.6) - 1.8;
-    float cDrift1 = cloudPuff(cp, vec2(driftX, 0.69), vec2(0.36, 0.085), nCloud, 0.72) * 0.40;
-    float driftX2 = mod(t * 0.010 + 2.9, 3.6) - 1.8;
-    float cDrift2 = cloudPuff(cp, vec2(driftX2, 0.82), vec2(0.28, 0.065), nCloud, 0.75) * 0.28;
+      float rim = smoothstep(0.15, 0.55, cloudAlpha) * (1.0 - smoothstep(0.55, 0.95, cloudAlpha));
+      cloudCol += vec3(0.035, 0.045, 0.04) * rim;
 
-    float lowBand = smoothstep(0.44, 0.28, uv.y) * smoothstep(0.38, 0.72, nLarge) * 0.38;
-    float cloudAlpha = clamp(max(max(cRight, cLeft), max(cDrift1, cDrift2)) + lowBand * 0.32, 0.0, 1.0);
-
-    float shadeSample = fbmS((cp + vec2(0.0, 0.06)) * 2.4 - vec2(drift * 1.4, 0.0));
-    float topLight = smoothstep(0.30, 0.68, uv.y) * 0.45 + (1.0 - shadeSample) * 0.55;
-    vec3 cloudShadow = vec3(0.765, 0.865, 0.950);
-    vec3 cloudLit = vec3(0.992, 0.996, 0.988);
-    vec3 cloudCol = mix(cloudShadow, cloudLit, clamp(topLight, 0.0, 1.0));
-
-    float rim = smoothstep(0.15, 0.55, cloudAlpha) * (1.0 - smoothstep(0.55, 0.95, cloudAlpha));
-    cloudCol += vec3(0.035, 0.045, 0.04) * rim;
-
-    vec3 finalSky = mix(sky, cloudCol, cloudAlpha * 0.94);
+      finalSky = mix(sky, cloudCol, cloudAlpha * 0.94);
+    }
     finalSky += (hashS(gl_FragCoord.xy + fract(t) * 31.0) - 0.5) / 255.0;
     gl_FragColor = vec4(finalSky, 1.0);
   }
@@ -513,6 +524,7 @@ const grassVertexShader = /* glsl */ `
   varying vec4 vData;     // x across(-1..1), y height, z cloud sun visibility, w near-lens feather
   varying vec3 vAlbedo;
   varying vec4 vFx;       // x bend magnitude, y bend toward sun, z wind, w distance
+  varying float vGust;    // breeze-sheen band phase (0..1), smooth over a blade
 
   ${NOISE_GLSL}
   ${FIELD_GLSL}
@@ -608,6 +620,10 @@ const grassVertexShader = /* glsl */ `
 
     float bendMag = length(spring);
     vFx = vec4(clamp(bendMag, 0.0, 1.5), dot(spring, normalize(vec2(0.55, 0.83))), windAmt, dist);
+
+    // Breeze sheen bands span ~20 world units, so per-vertex is exact to the eye
+    // and keeps the noise out of the (overdrawn) fragment stage
+    vGust = sin(dot(worldPos.xz, vec2(0.3, 0.16)) - t * 0.9 + noiseS(worldPos.xz * 0.18) * 2.2) * 0.5 + 0.5;
   }
 `;
 
@@ -618,6 +634,7 @@ const grassFragmentShader = /* glsl */ `
   varying vec4 vData;
   varying vec3 vAlbedo;
   varying vec4 vFx;
+  varying float vGust;
 
   ${NOISE_GLSL}
   ${FIELD_GLSL}
@@ -632,7 +649,6 @@ const grassFragmentShader = /* glsl */ `
     float edge = 1.0 - abs(across);
     float aaw = min(fwidth(across) * 1.2, 0.6);
     float alpha = smoothstep(0.0, aaw + nearLens * 0.6, edge);
-    if (alpha < 0.02) discard;
 
     // Curved cylindrical cross-blade normal (±35°) with a subtle central spine crease
     vec3 Nf = normalize(vN) * (gl_FrontFacing ? 1.0 : -1.0);
@@ -667,7 +683,7 @@ const grassFragmentShader = /* glsl */ `
     col += sunCol * pow(max(dot(N, Hv), 0.0), 28.0) * 0.08 * h * sunLight;
 
     // Breeze sheen: slow gust bands silvering the canopy as they roll through
-    float gust = smoothstep(0.62, 1.0, sin(dot(vWorld.xz, vec2(0.3, 0.16)) - uTime * 0.9 + noiseS(vWorld.xz * 0.18) * 2.2) * 0.5 + 0.5);
+    float gust = smoothstep(0.62, 1.0, vGust);
     col += vec3(0.03, 0.045, 0.018) * clamp(vFx.z * 0.5 + 0.5, 0.0, 1.0) * h;
     col += vec3(0.07, 0.085, 0.045) * gust * smoothstep(0.35, 1.0, h) * sunLight;
 
@@ -777,7 +793,6 @@ const plumeFragmentShader = /* glsl */ `
       albedo = mix(vec3(0.56, 0.6, 0.32), vec3(0.84, 0.78, 0.54), smoothstep(0.0, 0.7, headT) * (1.0 - u * 0.4));
     }
     alpha *= 1.0 - vLight.w * 0.35;
-    if (alpha < 0.02) discard;
 
     vec3 warm = albedo * vec3(1.06, 1.02, 0.88);
     albedo = mix(albedo * vec3(0.94, 1.0, 1.03), warm, vLight.z);
@@ -914,7 +929,6 @@ const flowerFragmentShader = /* glsl */ `
       col += col * vec3(0.35, 0.3, 0.12) * pow(max(dot(-V, uSunDir), 0.0), 3.0) * sunLight * 0.5;
     }
 
-    if (alpha < 0.02) discard;
     col = applyMeadowHaze(col, vLight.y);
     gl_FragColor = vec4(col, alpha);
   }
@@ -1040,7 +1054,13 @@ function fieldHalfWidth(z: number, spread: number, pad = 0.5) {
   return pad + (FRAMING.position[2] - z) * spread;
 }
 
-function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
+/**
+ * Grass planting as a resumable generator: it pauses every few hundred blades so
+ * the first build can be spread across short slices instead of one long
+ * main-thread task. Run to the end synchronously (resize replants) it plants the
+ * identical meadow: pausing never touches the random sequence.
+ */
+function* grassInstanceSteps(q: MeadowQuality, spread: number): Generator<void, GrassBuffers> {
   const rand = mulberry32(20210423);
   const k = densityScale(q, spread);
   const tuftCount = Math.round(q.tufts * k);
@@ -1069,10 +1089,23 @@ function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
     hue: number
   ) => {
     const len = Math.hypot(dx, dz) || 1;
-    root.set([x, terrainHeight(x, z), z, species], n * 4);
-    shape.set([height, width, lean, sCurve], n * 4);
-    dir.set([dx / len, dz / len, rand() * Math.PI * 2, twist], n * 4);
-    tint.set([shade, dry, hue, 0], n * 4);
+    // Direct writes (no per-blade temporary arrays); rand() order is unchanged
+    const o = n * 4;
+    root[o] = x;
+    root[o + 1] = terrainHeight(x, z);
+    root[o + 2] = z;
+    root[o + 3] = species;
+    shape[o] = height;
+    shape[o + 1] = width;
+    shape[o + 2] = lean;
+    shape[o + 3] = sCurve;
+    dir[o] = dx / len;
+    dir[o + 1] = dz / len;
+    dir[o + 2] = rand() * Math.PI * 2;
+    dir[o + 3] = twist;
+    tint[o] = shade;
+    tint[o + 1] = dry;
+    tint[o + 2] = hue;
     n++;
   };
 
@@ -1124,10 +1157,12 @@ function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
       const dry = rand() > 0.955 ? 0.35 + rand() * 0.45 : 0;
       push(bx, bz, 0, height, width, lean, sCurve, dx, dz, twist, shade, dry, tuftHue);
     }
+    if ((tufts & 31) === 0) yield;
   }
 
   // --- Filler blades so the canopy never reads as bald between tufts ---------
   for (let i = 0; i < fillerCount; i++) {
+    if ((i & 511) === 511) yield;
     const depthT = Math.pow(rand(), 1.1);
     const z = 5.0 - depthT * 20.2;
     const x = (rand() * 2 - 1) * fieldHalfWidth(z, spread);
@@ -1153,7 +1188,9 @@ function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
 
   // --- Low ground-cover rosettes keeping the meadow base lush and layered ----
   let gc = 0;
+  let gcRosettes = 0;
   while (gc < groundCoverCount) {
+    if ((++gcRosettes & 127) === 0) yield;
     const depthT = Math.pow(rand(), 1.35);
     const cz = 4.8 - depthT * 15.0;
     const cx = (rand() * 2 - 1) * fieldHalfWidth(cz, spread, 0.4);
@@ -1181,7 +1218,83 @@ function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
     }
   }
 
+  yield;
+  sortNearFirst([root, shape, dir, tint], n);
   return { root, shape, dir, tint, count: n };
+}
+
+function runToEnd<T>(steps: Generator<void, T>): T {
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
+}
+
+/** Drive a step generator in ~6 ms slices, yielding the main thread between them. */
+async function runSliced<T>(steps: Generator<void, T>, budgetMs = 6): Promise<T> {
+  for (;;) {
+    const deadline = performance.now() + budgetMs;
+    for (;;) {
+      const r = steps.next();
+      if (r.done) return r.value;
+      if (performance.now() >= deadline) break;
+    }
+    await yieldToMain();
+  }
+}
+
+function yieldToMain(): Promise<void> {
+  const scheduler = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+  if (scheduler?.yield) return scheduler.yield();
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function buildGrassInstances(q: MeadowQuality, spread: number): GrassBuffers {
+  return runToEnd(grassInstanceSteps(q, spread));
+}
+
+/**
+ * Reorder instances nearest-first. Within one instanced draw the GPU shades blades
+ * in buffer order, so near blades must land first for the depth test to reject the
+ * (many) blades hidden behind them before they are shaded. A linear-time bucket
+ * sort (~1 cm buckets) is plenty: exact order within a bucket doesn't matter.
+ */
+function sortNearFirst(buffers: Float32Array[], count: number) {
+  const BUCKETS = 2048;
+  const root = buffers[0];
+  const camZ = FRAMING.position[2];
+  const dist = new Float32Array(count);
+  let maxDist = 0;
+  for (let i = 0; i < count; i++) {
+    const x = root[i * 4];
+    const z = root[i * 4 + 2] - camZ;
+    const d = Math.sqrt(x * x + z * z);
+    dist[i] = d;
+    if (d > maxDist) maxDist = d;
+  }
+  const scale = (BUCKETS - 1) / (maxDist || 1);
+  const bucket = new Uint16Array(count);
+  const start = new Uint32Array(BUCKETS + 1);
+  for (let i = 0; i < count; i++) {
+    const b = (dist[i] * scale) | 0;
+    bucket[i] = b;
+    start[b + 1]++;
+  }
+  for (let b = 0; b < BUCKETS; b++) start[b + 1] += start[b];
+  const order = new Uint32Array(count);
+  for (let i = 0; i < count; i++) order[start[bucket[i]]++] = i;
+
+  for (const buf of buffers) {
+    const src = buf.slice(0, count * 4);
+    for (let i = 0; i < count; i++) {
+      const o = order[i] * 4;
+      const d = i * 4;
+      buf[d] = src[o];
+      buf[d + 1] = src[o + 1];
+      buf[d + 2] = src[o + 2];
+      buf[d + 3] = src[o + 3];
+    }
+  }
 }
 
 function buildPlumeInstances(q: MeadowQuality, spread: number) {
@@ -1295,12 +1408,44 @@ function makeSpringTarget(res: number) {
 // ---------------------------------------------------------------------------
 // Scene factory
 // ---------------------------------------------------------------------------
+/** Lens-fit planting width for a viewport (needed = what the lens sees). */
+function plantingSpread(aspect: number, fov: number) {
+  const needed = THREE.MathUtils.clamp(aspect * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * 1.14, 0.28, 1.2);
+  // Headroom avoids replanting when mobile toolbars nudge the viewport
+  return { needed, spread: Math.min(needed * 1.12, 1.25) };
+}
+
+export interface PreparedMeadowFlora {
+  readonly spread: number;
+  readonly grass: GrassBuffers;
+}
+
+/**
+ * Plants the meadow's grass for a viewport in short idle slices (never one long
+ * main-thread task). Pass the result to `createNurtureMeadowScene`; if the
+ * viewport changed meanwhile, the scene simply replants synchronously.
+ */
+export async function prepareMeadowFlora(
+  quality: MeadowQuality,
+  width: number,
+  height: number
+): Promise<PreparedMeadowFlora> {
+  const aspect = width / Math.max(height, 1);
+  const lens = new THREE.PerspectiveCamera(FRAMING.fov, aspect, 0.1, 100);
+  applyFraming(lens, aspect, FRAMING);
+  const { spread } = plantingSpread(aspect, lens.fov);
+  const grass = await runSliced(grassInstanceSteps(quality, spread));
+  return { spread, grass };
+}
+
 export function createNurtureMeadowScene(
   gl: THREE.WebGLRenderer,
   quality: MeadowQuality,
   width: number,
-  height: number
+  height: number,
+  prepared?: PreparedMeadowFlora
 ): HeroScene {
+  let preparedFlora = prepared;
   const useFbo = quality.springRes > 0;
   const springRes = quality.springRes;
   const defines: Record<string, string> = {};
@@ -1364,7 +1509,8 @@ export function createNurtureMeadowScene(
     vertexShader: skyVertexShader,
     fragmentShader: skyFragmentShader,
     depthWrite: false,
-    depthTest: false,
+    // Drawn last at the far plane: early-z skips every sky pixel behind the meadow
+    depthTest: true,
     toneMapped: false,
     uniforms: {
       uTime: shared.uTime,
@@ -1375,7 +1521,7 @@ export function createNurtureMeadowScene(
   });
   const skyQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyMaterial);
   skyQuad.frustumCulled = false;
-  skyQuad.renderOrder = -10;
+  skyQuad.renderOrder = 4;
   scene.add(skyQuad);
 
   // --- Hillside floor ----------------------------------------------------------
@@ -1398,6 +1544,7 @@ export function createNurtureMeadowScene(
   });
   const ground = new THREE.Mesh(groundGeometry, groundMaterial);
   ground.frustumCulled = false;
+  ground.renderOrder = 3; // after the flora that covers most of it
   scene.add(ground);
 
   // --- Flora: grass, seed plumes, wildflowers (frustum-fit, replanted on big aspect changes)
@@ -1418,17 +1565,21 @@ export function createNurtureMeadowScene(
   const grass = new THREE.Mesh(new THREE.InstancedBufferGeometry(), grassMaterial);
   const plumes = new THREE.Mesh(new THREE.InstancedBufferGeometry(), plumeMaterial);
   const flowers = new THREE.Mesh(new THREE.InstancedBufferGeometry(), flowerMaterial);
-  for (const mesh of [grass, plumes, flowers]) {
+  // Opaque draw order, nearest occluders first: grass, plumes, flowers, ground, sky
+  [grass, plumes, flowers].forEach((mesh, i) => {
     mesh.frustumCulled = false;
+    mesh.renderOrder = i;
     scene.add(mesh);
-  }
+  });
 
   const plumeRows = [0, 0.18, 0.36, 0.52, 0.63, PLUME_HEAD_START];
   for (let k = 1; k <= 8; k++) plumeRows.push(PLUME_HEAD_START + (k / 8) * (1 - PLUME_HEAD_START));
 
   let builtSpread = 0;
   const plantFlora = (spread: number) => {
-    const grassData = buildGrassInstances(quality, spread);
+    const grassData =
+      preparedFlora && preparedFlora.spread === spread ? preparedFlora.grass : buildGrassInstances(quality, spread);
+    preparedFlora = undefined;
     const grassGeometry = buildRibbon(evenRows(quality.bladeSegments));
     setInstanced(grassGeometry, 'aRoot', grassData.root.subarray(0, grassData.count * 4), 4);
     setInstanced(grassGeometry, 'aShape', grassData.shape.subarray(0, grassData.count * 4), 4);
@@ -1598,15 +1749,10 @@ export function createNurtureMeadowScene(
     const aspect = width / Math.max(height, 1);
     framing = applyFraming(camera, aspect, FRAMING);
 
-    // Plant only what the lens can see: tall phones get a narrow, dense field.
-    // Headroom avoids replanting when mobile toolbars nudge the viewport.
-    const needed = THREE.MathUtils.clamp(
-      aspect * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.14,
-      0.28,
-      1.2
-    );
+    // Plant only what the lens can see: tall phones get a narrow, dense field
+    const { needed, spread } = plantingSpread(aspect, camera.fov);
     if (builtSpread === 0 || needed > builtSpread || needed < builtSpread * 0.62) {
-      plantFlora(Math.min(needed * 1.12, 1.25));
+      plantFlora(spread);
     }
     lookTarget.set(0, framing.lookY, framing.lookZ);
     camera.lookAt(lookTarget);
@@ -1777,6 +1923,7 @@ export function createNurtureMeadowScene(
   return {
     scene,
     camera,
+    passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
     horizonUv: () => (framing.horizonNdc + 1) * 0.5,
     resize,
     update,
