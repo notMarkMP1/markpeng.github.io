@@ -56,3 +56,21 @@ export function applyFraming(
 
   return { pitch, horizonNdc, lookY: py - Math.tan(pitch) * reach, lookZ: pz - reach };
 }
+
+/**
+ * Bottom run-off: the canvas is `bleed` px taller than the frame the scene is composed
+ * for (`height - bleed`, framed by applyFraming above). The lens simply sees further
+ * down into the foreground there; everything above stays exactly where it was.
+ */
+export function applyBleed(camera: THREE.PerspectiveCamera, width: number, height: number, bleed: number) {
+  if (bleed > 0) camera.setViewOffset(width, height - bleed, 0, 0, width, height);
+  else camera.clearViewOffset();
+}
+
+/**
+ * Canvas-space (0 = bottom, 1 = top) y of a point at `frameY` within the composed
+ * frame, when the canvas runs `bleed` px further down.
+ */
+export function canvasY(frameY: number, height: number, bleed: number) {
+  return bleed > 0 ? (bleed + frameY * (height - bleed)) / height : frameY;
+}

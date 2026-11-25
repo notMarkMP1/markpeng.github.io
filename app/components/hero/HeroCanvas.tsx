@@ -9,6 +9,8 @@ import {
   detectEnvironment,
   probeRenderer,
   resolveTier,
+  BLADE_EDGE_MODES,
+  pickBladeEdges,
   type HeroEnvironment,
   type HeroQuality,
   type HeroTier,
@@ -17,6 +19,7 @@ import { createCompositePass, HERO_TRANSITION_MS, heroEase, themeToDawn, type Co
 import { createNightWaterStage } from './NightWaterStage';
 import { createNurtureMeadowScene, prepareMeadowFlora, type PreparedMeadowFlora } from './NurtureMeadowScene';
 import HeroDebugHud, { readHeroDebugFlag, type HeroDebugInfo } from './HeroDebugHud';
+import { readHeroBleed } from './safariChrome';
 import { createHeroInput, IDLE_INPUT, type HeroInput, type HeroScene, type HeroTheme } from './types';
 
 /*
@@ -37,6 +40,11 @@ const CANVAS_FADE_MS = 900;
 const GOVERNOR_SETTLE_MS = 4000;
 /** Pointer/touch quiet time after which high-refresh displays pace the idle scene. */
 const IDLE_PACE_AFTER_MS = 3000;
+
+/** Bottom run-off below the composed frame (iOS toolbar), never most of the canvas. */
+function bleedFor(height: number) {
+  return Math.min(readHeroBleed(), Math.floor(height * 0.3));
+}
 
 function readTheme(): HeroTheme {
   return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
@@ -154,10 +162,13 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame,
       const existing = state.scenes[theme];
       if (existing) return existing;
       const { width, height } = sizeRef.current;
+      const bleed = bleedFor(height);
+      // Built for the composed frame, then extended down into the run-off
       const created =
         theme === 'light'
-          ? createNurtureMeadowScene(gl, quality.meadow, width, height, flora)
-          : createNightWaterStage(gl, quality.water, width, height);
+          ? createNurtureMeadowScene(gl, quality.meadow, width, height - bleed, flora)
+          : createNightWaterStage(gl, quality.water, width, height - bleed);
+      if (bleed > 0) created.resize(width, height, bleed);
       state.scenes[theme] = created;
       return created;
     };
@@ -203,7 +214,7 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame,
         let flora: PreparedMeadowFlora | undefined;
         if (theme === 'light' && !state.scenes.light) {
           const { width, height } = sizeRef.current;
-          flora = await prepareMeadowFlora(quality.meadow, width, height);
+          flora = await prepareMeadowFlora(quality.meadow, width, height - bleedFor(height));
           if (state.disposed) return;
         }
         const target = build(theme, flora);
@@ -243,8 +254,9 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame,
   useEffect(() => {
     const state = stateRef.current;
     if (!state) return;
-    state.scenes.light?.resize(size.width, size.height);
-    state.scenes.dark?.resize(size.width, size.height);
+    const bleed = bleedFor(size.height);
+    state.scenes.light?.resize(size.width, size.height, bleed);
+    state.scenes.dark?.resize(size.width, size.height, bleed);
     invalidate();
   }, [size.width, size.height, dpr, invalidate]);
 
@@ -638,13 +650,15 @@ export default function HeroCanvas() {
               if ('drawingBufferColorSpace' in ctx) ctx.drawingBufferColorSpace = 'display-p3';
               if (ctx.drawingBufferColorSpace !== 'display-p3') p3Vivid = -1;
             }
-            const built = buildQuality({ ...env, p3Vivid }, resolved);
+            const bladeEdges = pickBladeEdges(env, probe);
+            const built = buildQuality({ ...env, p3Vivid }, resolved, bladeEdges);
             if (debug) {
               Object.assign(debug.lines, {
                 tier: `${resolved}${built.compact ? ' compact' : ''}${env.constrained ? ' constrained' : ''}`,
                 gamut: p3Vivid >= 0 ? `display-p3 (vivid ${p3Vivid})` : 'srgb',
                 msaa: `${ctx.getParameter(ctx.SAMPLES)}x default, targets ${built.msaa ? '4x' : 'off'}`,
                 waterSim: built.water.simRes || 'analytic',
+                blades: BLADE_EDGE_MODES[bladeEdges],
                 cores: navigator.hardwareConcurrency || '?',
                 renderer: probe.rendererName || '?',
               });

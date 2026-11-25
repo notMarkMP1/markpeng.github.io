@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 import type { HeroTheme } from './types';
 
-/** Shared with the CSS side so NavBar + HeroOverlay move on the exact same curve. */
-export const HERO_TRANSITION_MS = 520;
+export { HERO_TRANSITION_MS } from './types';
 
 /** cubic-bezier(0.22, 1, 0.36, 1) — evaluated with a few Newton steps. */
 export function heroEase(x: number): number {

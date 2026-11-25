@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { WaterQuality } from './capabilities';
 import { GAMUT_GLSL, gamutDefines } from './gamut';
-import { applyFraming, type CameraFraming, type FramingResult } from './framing';
+import { applyBleed, applyFraming, canvasY, type CameraFraming, type FramingResult } from './framing';
 import type { HeroFrameOptions, HeroInput, HeroScene } from './types';
 
 /*
@@ -552,6 +552,11 @@ export function createNightWaterStage(
   const pendingDrops: THREE.Vector3[] = [];
 
   let aspect = width / Math.max(height, 1);
+  // Canvas px per composed-frame px (> 1 only with a bottom bleed): keeps on-screen
+  // glide measured against the composed frame, exactly as without the run-off
+  let glideScale = 1;
+  let bleedPx = 0;
+  let canvasH = height;
   let time = 0;
   let simFrame = 0;
   let simAccumulator = 0;
@@ -589,9 +594,14 @@ export function createNightWaterStage(
     if (pendingDrops.length < 4) pendingDrops.push(new THREE.Vector3(u, v, strength));
   };
 
-  const resize = (w: number, h: number) => {
+  const resize = (w: number, h: number, bleed = 0) => {
+    const frameH = Math.max(h - bleed, 1);
     aspect = w / Math.max(h, 1);
-    framing = applyFraming(camera, aspect, FRAMING);
+    glideScale = bleed > 0 ? h / frameH : 1;
+    bleedPx = bleed;
+    canvasH = h;
+    framing = applyFraming(camera, w / frameH, FRAMING);
+    applyBleed(camera, w, h, bleed);
     lookTarget.set(0, framing.lookY, framing.lookZ);
     camera.lookAt(lookTarget);
     camera.updateMatrixWorld();
@@ -663,7 +673,7 @@ export function createNightWaterStage(
         lastWakeRippleNdc.copy(pointer);
         hasWakeRipple = true;
       } else {
-        const moved = Math.hypot((pointer.x - lastWakeRippleNdc.x) * aspect, pointer.y - lastWakeRippleNdc.y);
+        const moved = Math.hypot((pointer.x - lastWakeRippleNdc.x) * aspect, pointer.y - lastWakeRippleNdc.y) * glideScale;
         if (moved > 0.1 && time - lastWakeRippleTime > 0.12) {
           const amp = moved > 0.6 ? 0.3 : THREE.MathUtils.clamp(0.22 + moved * 0.75, 0.24, 0.5);
           spawnRipple(SEA_MIN_X + currU * SEA_SPAN, SEA_MIN_Z + currV * SEA_SPAN, amp * wakeAtten);
@@ -716,7 +726,7 @@ export function createNightWaterStage(
         if (hasStamp && Math.hypot(currU - stampUv.x, currV - stampUv.y) < 0.4) {
           fromU = stampUv.x;
           fromV = stampUv.y;
-          glide = Math.hypot((pointer.x - stampNdc.x) * aspect, pointer.y - stampNdc.y);
+          glide = Math.hypot((pointer.x - stampNdc.x) * aspect, pointer.y - stampNdc.y) * glideScale;
         } else {
           entering = true;
         }
@@ -779,7 +789,7 @@ export function createNightWaterStage(
     scene,
     camera,
     passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
-    horizonUv: () => (framing.horizonNdc + 1) * 0.5,
+    horizonUv: () => canvasY((framing.horizonNdc + 1) * 0.5, canvasH, bleedPx),
     resize,
     update,
     dispose,

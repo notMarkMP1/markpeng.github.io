@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { readHeroBleed } from './safariChrome';
 
 /** Mutable diagnostics the canvas writes into (no React re-renders per frame). */
 export interface HeroDebugInfo {
@@ -40,10 +41,10 @@ export default function HeroDebugHud({ info }: { info: HeroDebugInfo }) {
       const vv = window.visualViewport;
       const layer = document.querySelectorAll('.hero-layer')[1]?.getBoundingClientRect();
       return {
-        view: `inner ${innerWidth}x${innerHeight} vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : '?'} screen ${screen.width}x${screen.height}`,
+        view: `inner ${innerWidth}x${innerHeight} outer ${outerWidth}x${outerHeight} vv ${vv ? `${Math.round(vv.height)}+${Math.round(vv.offsetTop)}` : '?'} screen ${screen.width}x${screen.height}`,
         units: `svh ${unit('100svh')} lvh ${unit('100lvh')} dvh ${unit('100dvh')} vh ${unit('100vh')}`,
         safe: `t${parseFloat(cs.paddingTop)} b${parseFloat(cs.paddingBottom)} l${parseFloat(cs.paddingLeft)} r${parseFloat(cs.paddingRight)}`,
-        page: `doc ${document.documentElement.scrollHeight} scrollY ${Math.round(scrollY)} layer ${layer ? `${Math.round(layer.top)}+${Math.round(layer.height)}` : '?'}`,
+        page: `doc ${document.documentElement.scrollHeight} scrollY ${Math.round(scrollY)} layer ${layer ? `${Math.round(layer.top)}+${Math.round(layer.height)}` : '?'} bleed ${readHeroBleed()}`,
       };
     };
 

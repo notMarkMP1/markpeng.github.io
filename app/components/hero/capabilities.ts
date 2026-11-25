@@ -23,7 +23,23 @@ export interface HeroEnvironment {
    * toward the full P3 gamut (1). QA override via `/?gamut=srgb|exact|vivid|max`.
    */
   p3Vivid: number;
+  /**
+   * Grass blade edge treatment (see BLADE_EDGE_MODES). `auto`: `clean` on phones,
+   * tablets and Apple GPUs, `soft` on desktop. QA override via `/?blades=soft|crisp|clean`.
+   */
+  bladeEdges: 'auto' | BladeEdgeMode;
 }
+
+/**
+ * Grass blade edges (index = the BLADE_EDGES shader define):
+ *  soft  — alpha-to-coverage feather plus a wide shallow-lens feather on near blades
+ *  crisp — the geometry's own MSAA outline only (denser, darker foreground)
+ *  clean — a one-pixel feather snapped to whole MSAA samples. GPUs dither in-between
+ *          coverage across neighbouring pixels, which at phone pixel densities reads
+ *          as a speckled light fringe around every blade; whole samples can't dither.
+ */
+export const BLADE_EDGE_MODES = ['soft', 'crisp', 'clean'] as const;
+export type BladeEdgeMode = (typeof BLADE_EDGE_MODES)[number];
 
 export interface RendererProbe {
   isWebGL2: boolean;
@@ -63,6 +79,8 @@ export interface MeadowQuality {
   densitySpread: number;
   /** Wide-gamut output strength (see HeroEnvironment.p3Vivid). */
   p3Vivid: number;
+  /** Index into BLADE_EDGE_MODES (0 = soft, the desktop look). */
+  bladeEdges: number;
 }
 
 export interface HeroQuality {
@@ -96,6 +114,7 @@ export function detectEnvironment(): HeroEnvironment {
   let p3Vivid = window.matchMedia('(color-gamut: p3)').matches ? P3_DEFAULT_VIVID : -1;
 
   let forcedTier: HeroTier | null = null;
+  let bladeEdges: HeroEnvironment['bladeEdges'] = 'auto';
   try {
     const params = new URLSearchParams(window.location.search);
     const raw = params.get('heroTier');
@@ -105,6 +124,8 @@ export function detectEnvironment(): HeroEnvironment {
     else if (gamut === 'exact') p3Vivid = 0;
     else if (gamut === 'vivid') p3Vivid = P3_DEFAULT_VIVID;
     else if (gamut === 'max') p3Vivid = 1;
+    const blades = params.get('blades');
+    if ((BLADE_EDGE_MODES as readonly string[]).includes(blades ?? '')) bladeEdges = blades as BladeEdgeMode;
   } catch {
     // ignore malformed URLs
   }
@@ -117,6 +138,7 @@ export function detectEnvironment(): HeroEnvironment {
     forcedTier,
     hasWebGL2Api: typeof window.WebGL2RenderingContext !== 'undefined',
     p3Vivid,
+    bladeEdges,
   };
 }
 
@@ -169,6 +191,13 @@ export function probeRenderer(gl: THREE.WebGLRenderer): RendererProbe {
   return { isWebGL2, halfFloatFbo, softwareRenderer, rendererName };
 }
 
+/** Blade-edge treatment for this device (index into BLADE_EDGE_MODES). */
+export function pickBladeEdges(env: HeroEnvironment, probe: RendererProbe) {
+  if (env.bladeEdges !== 'auto') return BLADE_EDGE_MODES.indexOf(env.bladeEdges);
+  const clean = env.isTouch || env.isCompact || /\bapple\b/i.test(probe.rendererName);
+  return BLADE_EDGE_MODES.indexOf(clean ? 'clean' : 'soft');
+}
+
 export function resolveTier(env: HeroEnvironment, probe: RendererProbe | null): HeroTier {
   if (env.forcedTier) return env.forcedTier;
   if (!env.hasWebGL2Api) return 3;
@@ -183,7 +212,7 @@ export function compactMaxDpr(env: HeroEnvironment) {
   return env.constrained ? 1.5 : 2;
 }
 
-export function buildQuality(env: HeroEnvironment, tier: 1 | 2): HeroQuality {
+export function buildQuality(env: HeroEnvironment, tier: 1 | 2, bladeEdges = 0): HeroQuality {
   const compact = env.isCompact || (env.isTouch && Math.min(window.innerWidth, window.innerHeight) < 820);
   const fbo = tier === 1;
   const p3Vivid = env.p3Vivid;
@@ -215,6 +244,7 @@ export function buildQuality(env: HeroEnvironment, tier: 1 | 2): HeroQuality {
         // Constrained / no-FBO phones plant ~25% lighter
         densitySpread: fbo ? 0.33 : 0.44,
         p3Vivid,
+        bladeEdges,
       },
     };
   }
@@ -238,6 +268,7 @@ export function buildQuality(env: HeroEnvironment, tier: 1 | 2): HeroQuality {
       widthScale: 1.18,
       densitySpread: 0.42,
       p3Vivid,
+      bladeEdges,
     },
   };
 }

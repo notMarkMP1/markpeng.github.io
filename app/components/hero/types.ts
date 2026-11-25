@@ -2,6 +2,13 @@ import type * as THREE from 'three';
 
 export type HeroTheme = 'light' | 'dark';
 
+/**
+ * Theme transition length, shared with the CSS side (--hero-duration) so NavBar +
+ * HeroOverlay move on the exact same curve. Lives here, free of three.js, so the
+ * page shell can use it without pulling in the renderer.
+ */
+export const HERO_TRANSITION_MS = 520;
+
 export interface HeroTap {
   /** Normalized device coordinates (-1..1). */
   x: number;
@@ -37,9 +44,13 @@ export interface HeroScene {
    * asynchronously with `scene`, so their first step never blocks on a shader link.
    */
   readonly passes: ReadonlyArray<{ scene: THREE.Scene; camera: THREE.Camera }>;
-  /** Screen-space y (0 = bottom, 1 = top) of the horizon, for the transition sweep. */
+  /** Canvas-space y (0 = bottom, 1 = top) of the horizon, for the transition sweep. */
   horizonUv(): number;
-  resize(width: number, height: number): void;
+  /**
+   * `bleed`: CSS px at the bottom of the canvas below the composed frame (the scene is
+   * framed for `height - bleed`; the view just continues down into the foreground).
+   */
+  resize(width: number, height: number, bleed?: number): void;
   update(dt: number, input: HeroInput, options: HeroFrameOptions): void;
   dispose(): void;
 }

@@ -293,6 +293,31 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * The DPR governor only judges full-rate frames.
 * `IDLE_PACE_AFTER_MS` in `HeroCanvas.tsx` tunes it; `Infinity` disables it.
 
+### Phone & iOS Safari Notes (Nov 2026, tested on an iPhone 17 / iOS 26 Safari)
+**Quality tier on iPhone:**
+* WebKit clamps `hardwareConcurrency` to 2–4 on iOS, so the core count is ignored on Apple mobile devices.
+* Capable phones get the compact Tier 1: DPR up to 2, 4× MSAA targets, and desktop-grade water (512 sim). The frame-time governor still steps down a phone that can't keep up.
+* **Wide gamut:** on Display-P3 screens the drawing buffer is tagged `display-p3`. `outputGamut()` (`gamut.ts`) leans colours 65% toward P3, and `?gamut=srgb|exact|vivid|max` overrides it.
+
+**Floating toolbar (iOS 26):**
+* Safari clips `position: fixed` layers at its floating toolbar and paints a flat tint below them. On touch devices the hero layers are therefore in-document (`position: absolute`).
+* Safari only draws page content under the toolbar as far as the document reaches, and `100lvh` stops 58pt above the bottom of an iPhone 17 screen (`?herodebug` measured inner 714, lvh 754, screen 874).
+* `safariChrome.ts` therefore sets `--hero-bleed` (screen height − lvh, overshooting off-screen by the status-bar height) and the layers run that far past 100lvh.
+* The scenes stay composed for the 100lvh frame. `applyBleed()` (`framing.ts`) extends the camera's view downward with `setViewOffset`, so everything above the bleed is unchanged; only the film-grain dither differs.
+* While the hero fits on screen, single-finger panning is held still so the run-off never scrolls into view. Pinch-zoom, and panning once zoomed in, still work.
+
+**Status bar:**
+* Safari 26 ignores `theme-color`. It tints the status bar from a fixed element touching the top edge, but only one taller than 10px with a solid background colour.
+* `.hero-top-tint` is an 11px strip whose background is clipped to text it doesn't have, so it paints nothing.
+* Its colour switches when the theme sweep reaches the top of the sky: 60% of the way into dawn, 12% into dusk. Changing its height for two frames makes Safari re-sample the colour.
+
+**Grass blade edges:**
+* GPUs dither fractional alpha-to-coverage across neighbouring pixels. At phone pixel densities that read as a speckled light fringe around every blade.
+* Phones, tablets and Apple GPUs use `clean` edges: a one-pixel feather snapped to whole MSAA samples, with no lens feather. Desktop keeps `soft`.
+* `?blades=soft|crisp|clean` overrides the choice for QA. `crisp` (geometry-only outlines) makes the foreground noticeably darker.
+
+**On-device QA:** `/?herodebug` shows tier, gamut, MSAA, blade mode, renderer, DPR and fps, plus viewport and safe-area metrics and the bleed.
+
 ### Cleanup Notes
 * Once Mark signs off on the final Phase 6 hero, verify nothing else imports legacy `app/components/WaterShader.jsx` or `app/utils/shaders.ts` and remove them cleanly during Pre-Launch QA.
 * Never leave the temporary `draft` control bar from commit `0d587a4` in the production hero.

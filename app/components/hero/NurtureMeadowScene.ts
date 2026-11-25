@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { MeadowQuality } from './capabilities';
 import { GAMUT_GLSL, gamutDefines } from './gamut';
-import { applyFraming, type CameraFraming, type FramingResult } from './framing';
+import { applyBleed, applyFraming, canvasY, type CameraFraming, type FramingResult } from './framing';
 import type { HeroFrameOptions, HeroInput, HeroScene } from './types';
 
 /*
@@ -363,9 +363,12 @@ const springSimFragmentShader = /* glsl */ `
 // 2. Painterly daylight sky + cumulus banks (preserved from prototype)
 // ---------------------------------------------------------------------------
 const skyVertexShader = /* glsl */ `
+  // Canvas uv -> composed-frame uv (scale, offset): (1, 0) unless the canvas runs on
+  // below the frame (iOS toolbar run-off), where the sky keeps its exact placement
+  uniform vec2 uFrameY;
   varying vec2 vUv;
   void main() {
-    vUv = uv;
+    vUv = vec2(uv.x, uv.y * uFrameY.x + uFrameY.y);
     gl_Position = vec4(position.xy, 0.9999, 1.0);
   }
 `;
@@ -652,12 +655,25 @@ const grassFragmentShader = /* glsl */ `
     float sunVis = vData.z;
     float nearLens = vData.w;
 
-    // Soft alpha-to-coverage edges; foreground wisps feather like a shallow lens
+    // Blade edges (BLADE_EDGES, see capabilities.ts):
+    //  0 soft  — alpha-to-coverage feather; foreground wisps feather like a shallow lens
+    //  1 crisp — the geometry's own MSAA outline only
+    //  2 clean — a one-pixel feather snapped to whole MSAA samples. GPUs dither any
+    //            in-between coverage across neighbouring pixels, which phones show as
+    //            a speckled fringe on every blade; whole samples leave nothing to dither.
+  #if BLADE_EDGES == 1
+    float alpha = 1.0;
+  #else
     float edge = 1.0 - abs(across);
     // (edge widths kept > 0: smoothstep with equal edges is undefined, and Apple
     // GPUs really do return garbage for it)
     float aaw = clamp(fwidth(across) * 1.2, 1e-4, 0.6);
-    float alpha = smoothstep(0.0, aaw + nearLens * 0.6, edge);
+    #if BLADE_EDGES == 2
+      float alpha = floor(smoothstep(0.0, aaw, edge) * 4.0 + 0.5) * 0.25;
+    #else
+      float alpha = smoothstep(0.0, aaw + nearLens * 0.6, edge);
+    #endif
+  #endif
 
     // Curved cylindrical cross-blade normal (±35°) with a subtle central spine crease
     vec3 Nf = normalize(vN) * (gl_FrontFacing ? 1.0 : -1.0);
@@ -1469,6 +1485,8 @@ export function createNurtureMeadowScene(
   const gamut = gamutDefines(quality.p3Vivid);
   const defines: Record<string, string> = { ...gamut };
   if (useFbo) defines.USE_SPRING_FBO = '';
+  // Always defined: GLSL ES rejects an undefined macro inside #if
+  defines.BLADE_EDGES = String(quality.bladeEdges);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FRAMING.fov, 1, 0.1, 100);
@@ -1537,6 +1555,7 @@ export function createNurtureMeadowScene(
       uResolution: { value: new THREE.Vector2(1280, 720) },
       uHorizonShift: { value: 0 },
       uCloudScale: { value: 1 },
+      uFrameY: { value: new THREE.Vector2(1, 0) },
     },
   });
   const skyQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyMaterial);
@@ -1768,9 +1787,15 @@ export function createNurtureMeadowScene(
     wakeCursor = (slot + 1) % WAKE_SLOTS;
   };
 
-  const resize = (width: number, height: number) => {
-    const aspect = width / Math.max(height, 1);
+  let bleedPx = 0;
+  let canvasH = height;
+  const resize = (width: number, height: number, bleed = 0) => {
+    const frameH = Math.max(height - bleed, 1);
+    const aspect = width / frameH;
+    bleedPx = bleed;
+    canvasH = height;
     framing = applyFraming(camera, aspect, FRAMING);
+    applyBleed(camera, width, height, bleed);
 
     // Plant only what the lens can see: tall phones get a narrow, dense field
     const { needed, spread } = plantingSpread(aspect, camera.fov);
@@ -1780,7 +1805,8 @@ export function createNurtureMeadowScene(
     lookTarget.set(0, framing.lookY, framing.lookZ);
     camera.lookAt(lookTarget);
     camera.updateMatrixWorld();
-    skyMaterial.uniforms.uResolution.value.set(width, height);
+    skyMaterial.uniforms.uResolution.value.set(width, frameH);
+    skyMaterial.uniforms.uFrameY.value.set(bleed > 0 ? height / frameH : 1, bleed > 0 ? -bleed / frameH : 0);
     skyMaterial.uniforms.uHorizonShift.value = (framing.horizonNdc + 1) * 0.5 - REFERENCE_HORIZON_UV;
     skyMaterial.uniforms.uCloudScale.value = THREE.MathUtils.clamp(aspect / 1.25, 0.52, 1.0);
     pixelRatio.value = gl.getPixelRatio();
@@ -1947,7 +1973,7 @@ export function createNurtureMeadowScene(
     scene,
     camera,
     passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
-    horizonUv: () => (framing.horizonNdc + 1) * 0.5,
+    horizonUv: () => canvasY((framing.horizonNdc + 1) * 0.5, canvasH, bleedPx),
     resize,
     update,
     dispose,

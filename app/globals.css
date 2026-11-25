@@ -765,34 +765,53 @@ html[data-theme="dark"] .hero-overlay {
 /* Full-screen hero layers (CSS backdrop + WebGL canvas). Desktop keeps them fixed.
    On touch devices they live in the document instead: iOS 26 Safari clips fixed
    layers at its floating toolbar and paints a flat tint there, while ordinary page
-   content keeps flowing (visibly) underneath it. `/` never scrolls, so they hold
-   still either way; 100lvh also spares the canvas a resize as toolbars collapse. */
+   content keeps flowing (visibly) underneath it, though only as far as the document
+   reaches. On iOS, --hero-bleed (safariChrome.ts) runs them on past 100lvh down to
+   the screen bottom; the scene stays composed for the 100lvh frame. 100lvh also
+   spares the canvas a resize as toolbars collapse. */
 .hero-layer {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 100lvh;
+  height: calc(100lvh + var(--hero-bleed, 0px));
 }
 
-/* Safari tints its status-bar strip from a solid fixed element touching the top
-   edge; with the canvas no longer fixed on touch, this keeps that strip on the
-   scene's sky (or night void) instead of the page background. */
+/* The hero holds still while its run-off is in place (see safariChrome.ts) */
+html[data-hero-bleed] {
+  overscroll-behavior: none;
+}
+
+/* Safari 26 tints its status-bar strip from a fixed element touching the top edge,
+   but only one taller than 10px with a solid background colour. This one paints
+   nothing (its background is clipped to text it doesn't have), yet keeps that strip
+   on the scene's sky (or night void) instead of the page background. Its colour is
+   switched by safariChrome.ts as the theme sweep reaches the top of the sky. */
 .hero-top-tint {
   display: none;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
+  z-index: 2147483647;
+  height: 11px;
+  border: 0;
+  /* The meadow sky's top edge (as rendered in Display P3) */
   background-color: #5f8fdc;
-  background-color: color(display-p3 0.36 0.56 0.87);
-  transition: background-color var(--hero-duration) var(--hero-ease);
+  background-color: color(display-p3 0.329 0.565 0.878);
+  -webkit-background-clip: text;
+  background-clip: text;
   pointer-events: none;
 }
 
-html[data-theme="dark"] .hero-top-tint {
+html[data-theme="dark"]:not([data-hero-tint]) .hero-top-tint,
+html[data-hero-tint="dark"] .hero-top-tint {
   background-color: #08090d;
+}
+
+/* Changing the size makes Safari re-sample a colour it cached */
+html[data-hero-tint-refresh] .hero-top-tint {
+  height: 12px;
 }
 
 @media (pointer: coarse) {
@@ -832,6 +851,21 @@ html[data-theme="dark"] .hero-top-tint {
 
 html[data-theme="dark"] .hero-backdrop-day {
   opacity: 0;
+}
+
+/* Toolbar run-off (iOS): the backdrop keeps its composed 100lvh frame and the strip
+   below continues the foreground's bottom edge */
+html[data-hero-bleed] .hero-backdrop {
+  background-color: #1d4627;
+}
+
+html[data-hero-bleed][data-theme="dark"] .hero-backdrop {
+  background-color: #030407;
+}
+
+.hero-backdrop > .hero-backdrop-day,
+.hero-backdrop > .hero-backdrop-night {
+  bottom: var(--hero-bleed, 0px);
 }
 
 /* The live WebGL canvas fully covers the backdrop: skip painting it entirely */
