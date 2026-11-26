@@ -588,6 +588,7 @@ body {
 @property --hero-btn-shadow { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-btn-lift { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-focus { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --hero-focus-halo { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-title-shadow-a { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-title-shadow-b { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-title-shadow-y { syntax: '<length>'; inherits: true; initial-value: 3px; }
@@ -645,6 +646,7 @@ html[data-theme="dark"] .home-nav {
   --hero-btn-shadow: rgba(255, 255, 255, 0);
   --hero-btn-lift: rgba(18, 64, 132, 0.12);
   --hero-focus: rgba(29, 90, 168, 0.75);
+  --hero-focus-halo: rgba(2, 8, 20, 0);
   --hero-title-shadow-a: rgba(16, 62, 128, 0.24);
   --hero-title-shadow-b: rgba(18, 70, 142, 0.3);
   --hero-title-shadow-y: 3px;
@@ -664,6 +666,7 @@ html[data-theme="dark"] .home-nav {
     --hero-btn-shadow var(--hero-duration) var(--hero-ease),
     --hero-btn-lift var(--hero-duration) var(--hero-ease),
     --hero-focus var(--hero-duration) var(--hero-ease),
+    --hero-focus-halo var(--hero-duration) var(--hero-ease),
     --hero-title-shadow-a var(--hero-duration) var(--hero-ease),
     --hero-title-shadow-b var(--hero-duration) var(--hero-ease),
     --hero-title-shadow-y var(--hero-duration) var(--hero-ease);
@@ -688,7 +691,10 @@ html[data-theme="dark"] .hero-overlay {
      a 0-alpha shadow, then built its blur pipeline mid-way through the first
      toggle to light (~100 ms frame on some GPUs). Drawing it from page load avoids that. */
   --hero-btn-lift: rgba(0, 0, 0, 0.01);
-  --hero-focus: rgba(137, 176, 255, 0.55);
+  /* The buttons sit on the stage light's brightest blue: a pale ring with a thin dark
+     halo stays visible over it and over the void alike */
+  --hero-focus: rgba(236, 244, 255, 0.95);
+  --hero-focus-halo: rgba(2, 8, 20, 0.55);
   --hero-title-shadow-a: rgba(0, 0, 0, 0);
   --hero-title-shadow-b: rgba(0, 0, 0, 0.45);
   --hero-title-shadow-y: 2px;
@@ -735,7 +741,11 @@ html[data-theme="dark"] .hero-overlay {
 
 /* Unlayered box-shadow above would hide Tailwind's ring utility — draw the ring here */
 .hero-action:focus-visible {
-  box-shadow: 0 0 0 2px var(--hero-focus), 0 1px 2px var(--hero-btn-lift), 0 4px 14px var(--hero-btn-lift);
+  box-shadow:
+    0 0 0 2px var(--hero-focus),
+    0 0 0 3.5px var(--hero-focus-halo),
+    0 1px 2px var(--hero-btn-lift),
+    0 4px 14px var(--hero-btn-lift);
 }
 
 .hero-action-icon {
