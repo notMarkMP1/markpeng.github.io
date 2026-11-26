@@ -7,16 +7,14 @@ import {
   buildQuality,
   compactMaxDpr,
   detectEnvironment,
+  canRenderHero,
   probeRenderer,
-  resolveTier,
   type HeroEnvironment,
   type HeroQuality,
-  type HeroTier,
 } from './capabilities';
 import { createCompositePass, HERO_TRANSITION_MS, heroEase, themeToDawn, type CompositorPass } from './compositor';
 import { createNightWaterStage } from './NightWaterStage';
 import { createNurtureMeadowScene, prepareMeadowFlora, type PreparedMeadowFlora } from './NurtureMeadowScene';
-import HeroDebugHud, { readHeroDebugFlag, type HeroDebugInfo } from './HeroDebugHud';
 import { readHeroBleed } from './safariChrome';
 import { createHeroInput, IDLE_INPUT, type HeroInput, type HeroScene, type HeroTheme } from './types';
 
@@ -116,10 +114,9 @@ interface CompositorProps {
   input: HeroInput;
   reducedMotion: boolean;
   onFirstFrame: () => void;
-  debug: HeroDebugInfo | null;
 }
 
-function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame, debug }: CompositorProps) {
+function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame }: CompositorProps) {
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
@@ -415,11 +412,6 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame,
       state.firstFrameSent = true;
       onFirstFrame();
     }
-    if (debug && debug.frames++ % 30 === 0) {
-      const buffer = gl.getDrawingBufferSize(new THREE.Vector2());
-      debug.lines.dpr = `${gl.getPixelRatio().toFixed(2)} (${buffer.x}x${buffer.y})`;
-      debug.lines.idlePacing = every > 1 ? `every ${every}` : 'off';
-    }
 
     // ---- Frame-time governor -----------------------------------------------------
     // A weaker GPU that can't hold ~42 fps at rest steps the render resolution down
@@ -462,20 +454,21 @@ class CanvasErrorBoundary extends Component<{ onError: () => void; children: Rea
 
 export default function HeroCanvas() {
   const [env, setEnv] = useState<HeroEnvironment | null>(null);
-  const [tier, setTier] = useState<HeroTier | null>(null);
+  // The scene can't run here (no hardware WebGL2) or lost its context: the flat
+  // CSS backdrop stays instead
+  const [failed, setFailed] = useState(false);
   const [quality, setQuality] = useState<HeroQuality | null>(null);
   const [visible, setVisible] = useState(false);
   const themeRef = useRef<HeroTheme>('dark');
   const inputRef = useRef<HeroInput>(createHeroInput());
   const invalidateRef = useRef<(() => void) | null>(null);
   const layerRef = useRef<HTMLDivElement>(null);
-  const [debug] = useState<HeroDebugInfo | null>(() => (readHeroDebugFlag() ? { frames: 0, lines: {} } : null));
 
   useEffect(() => {
     themeRef.current = readTheme();
     const detected = detectEnvironment();
     setEnv(detected);
-    if (resolveTier(detected, null) === 3) setTier(3);
+    if (!canRenderHero(detected, null)) setFailed(true);
 
     // html[data-theme] is the single source of truth (set synchronously on toggle,
     // so the GPU sweep starts on the same frame as the CSS transitions).
@@ -574,24 +567,24 @@ export default function HeroCanvas() {
   // Once the opaque canvas has fully faded in, the CSS backdrop underneath is pure
   // overhead: Chrome still re-rasterises its full-screen gradients whenever a theme
   // toggle cross-fades them, which stalled the first toggles by ~100–500 ms.
-  // Hide it while the canvas covers it; it comes back for Tier 3 / context loss.
+  // Hide it while the canvas covers it; it comes back if the canvas fails.
   const [covered, setCovered] = useState(false);
   const fadeMs = env?.reducedMotion ? 0 : CANVAS_FADE_MS;
   useEffect(() => {
-    if (!visible || tier === 3) return;
+    if (!visible || failed) return;
     const timer = window.setTimeout(() => setCovered(true), fadeMs + 50);
     return () => window.clearTimeout(timer);
-  }, [visible, tier, fadeMs]);
+  }, [visible, failed, fadeMs]);
   useEffect(() => {
-    if (!covered || tier === 3) return;
+    if (!covered || failed) return;
     const root = document.documentElement;
     root.dataset.heroCanvas = 'live';
     return () => {
       delete root.dataset.heroCanvas;
     };
-  }, [covered, tier]);
+  }, [covered, failed]);
 
-  if (!env || tier === 3) return null;
+  if (!env || failed) return null;
 
   const reducedMotion = env.reducedMotion;
   const compact = env.isCompact || env.isTouch;
@@ -608,7 +601,7 @@ export default function HeroCanvas() {
         transition: reducedMotion ? 'none' : `opacity ${CANVAS_FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
-      <CanvasErrorBoundary onError={() => setTier(3)}>
+      <CanvasErrorBoundary onError={() => setFailed(true)}>
         <Canvas
           flat
           linear
@@ -626,17 +619,15 @@ export default function HeroCanvas() {
             // Shader diagnostics are synchronous GPU round-trips on every program's
             // first use; keep them for development, skip them in production.
             gl.debug.checkShaderErrors = process.env.NODE_ENV !== 'production';
-            const probe = probeRenderer(gl);
-            const resolved = resolveTier(env, probe);
-            if (resolved === 3) {
-              setTier(3);
+            if (!canRenderHero(env, probeRenderer(gl))) {
+              setFailed(true);
               return;
             }
             gl.domElement.addEventListener(
               'webglcontextlost',
               (event) => {
                 event.preventDefault();
-                setTier(3);
+                setFailed(true);
               },
               { once: true }
             );
@@ -648,20 +639,7 @@ export default function HeroCanvas() {
               if ('drawingBufferColorSpace' in ctx) ctx.drawingBufferColorSpace = 'display-p3';
               if (ctx.drawingBufferColorSpace !== 'display-p3') p3Vivid = -1;
             }
-            const built = buildQuality({ ...env, p3Vivid }, resolved);
-            if (debug) {
-              Object.assign(debug.lines, {
-                tier: `${resolved}${built.compact ? ' compact' : ''}${env.constrained ? ' constrained' : ''}`,
-                gamut: p3Vivid >= 0 ? `display-p3 (vivid ${p3Vivid})` : 'srgb',
-                msaa: `${ctx.getParameter(ctx.SAMPLES)}x default, targets ${built.msaa ? '4x' : 'off'}`,
-                waterSim: built.water.simRes || 'analytic',
-                blades: env.bladeEdges,
-                cores: navigator.hardwareConcurrency || '?',
-                renderer: probe.rendererName || '?',
-              });
-            }
-            setTier(resolved);
-            setQuality(built);
+            setQuality(buildQuality({ ...env, p3Vivid }));
           }}
         >
           {quality && (
@@ -671,12 +649,10 @@ export default function HeroCanvas() {
               input={inputRef.current}
               reducedMotion={reducedMotion}
               onFirstFrame={() => setVisible(true)}
-              debug={debug}
             />
           )}
         </Canvas>
       </CanvasErrorBoundary>
-      {debug && <HeroDebugHud info={debug} />}
     </div>
   );
 }

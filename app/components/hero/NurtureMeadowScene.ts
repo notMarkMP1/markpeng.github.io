@@ -26,7 +26,6 @@ const FIELD_MIN_Z = -13.0;
 const FIELD_MAX_Z = 6.0;
 const FIELD_DEPTH = FIELD_MAX_Z - FIELD_MIN_Z;
 
-const WAKE_SLOTS = 6;
 const STILL_TIME = 14.0;
 /** Screen-space horizon of the validated prototype camera — sky layout is authored against it. */
 const REFERENCE_HORIZON_UV = 0.5116;
@@ -223,33 +222,16 @@ const FIELD_GLSL = /* glsl */ `
   }
 `;
 
-// Spring field sampling (Tier 1 FBO) or 6-point analytical touch wakes (Tier 2)
+// Spring field sampling
 const BEND_GLSL = /* glsl */ `
   uniform sampler2D uSpringField;
   uniform vec2 uFieldMin;
   uniform vec2 uFieldSize;
-  uniform vec4 uWakes[${WAKE_SLOTS}];
 
   vec2 springAt(vec2 xz) {
-  #ifdef USE_SPRING_FBO
     vec2 fieldUv = (xz - uFieldMin) / uFieldSize;
     vec2 inside = step(vec2(0.0), fieldUv) * step(fieldUv, vec2(1.0));
     return texture2D(uSpringField, clamp(fieldUv, 0.0, 1.0)).xy * (inside.x * inside.y);
-  #else
-    vec2 disp = vec2(0.0);
-    for (int i = 0; i < ${WAKE_SLOTS}; i++) {
-      vec4 w = uWakes[i];
-      if (w.w > 0.001) {
-        vec2 d = xz - w.xy;
-        float r2 = dot(d, d);
-        float age = max(uTime - w.z, 0.0);
-        float env = (1.0 - exp(-age * 9.0)) * exp(-age * 1.55);
-        float osc = cos(age * 3.4);
-        disp += (d * inversesqrt(r2 + 0.0004)) * exp(-r2 / 0.9) * env * osc * w.w;
-      }
-    }
-    return disp;
-  #endif
   }
 
   vec2 breezeOffset(vec2 rootXZ, float phase, float t, out float windAmt) {
@@ -655,24 +637,13 @@ const grassFragmentShader = /* glsl */ `
     float sunVis = vData.z;
     float nearLens = vData.w;
 
-    // Blade edges (BLADE_EDGES, see capabilities.ts):
-    //  0 soft  — alpha-to-coverage feather; foreground wisps feather like a shallow lens
-    //  1 crisp — the geometry's own MSAA outline only
-    //  2 clean — (default) a one-pixel feather snapped to whole MSAA samples, so the
-    //            GPU has no in-between coverage to dither across neighbouring pixels
-  #if BLADE_EDGES == 1
-    float alpha = 1.0;
-  #else
+    // Clean blade edges: a one-pixel feather snapped to whole MSAA samples, so the
+    // GPU has no in-between coverage to dither across neighbouring pixels
     float edge = 1.0 - abs(across);
     // (edge widths kept > 0: smoothstep with equal edges is undefined, and Apple
     // GPUs really do return garbage for it)
     float aaw = clamp(fwidth(across) * 1.2, 1e-4, 0.6);
-    #if BLADE_EDGES == 2
-      float alpha = floor(smoothstep(0.0, aaw, edge) * 4.0 + 0.5) * 0.25;
-    #else
-      float alpha = smoothstep(0.0, aaw + nearLens * 0.6, edge);
-    #endif
-  #endif
+    float alpha = floor(smoothstep(0.0, aaw, edge) * 4.0 + 0.5) * 0.25;
 
     // Curved cylindrical cross-blade normal (±35°) with a subtle central spine crease
     vec3 Nf = normalize(vN) * (gl_FrontFacing ? 1.0 : -1.0);
@@ -1482,14 +1453,10 @@ export function createNurtureMeadowScene(
   prepared?: PreparedMeadowFlora
 ): HeroScene {
   let preparedFlora = prepared;
-  const useFbo = quality.springRes > 0;
   const springRes = quality.springRes;
   // Wide-gamut output for every colour pass (never the physics sim)
   const gamut = gamutDefines(quality.p3Vivid);
   const defines: Record<string, string> = { ...gamut };
-  if (useFbo) defines.USE_SPRING_FBO = '';
-  // Always defined: GLSL ES rejects an undefined macro inside #if
-  defines.BLADE_EDGES = String(quality.bladeEdges);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FRAMING.fov, 1, 0.1, 100);
@@ -1499,50 +1466,40 @@ export function createNurtureMeadowScene(
   const pixelRatio = { value: gl.getPixelRatio() };
 
   // Uniforms shared by every meadow material (one clock, one wind, one sun)
-  const wakes = Array.from({ length: WAKE_SLOTS }, () => new THREE.Vector4(0, 0, -100, 0));
   const shared = {
     uTime: { value: 0 },
     uSunDir: { value: SUN_DIR.clone() },
     uSpringField: { value: null as THREE.Texture | null },
     uFieldMin: { value: new THREE.Vector2(FIELD_MIN_X, FIELD_MIN_Z) },
     uFieldSize: { value: new THREE.Vector2(FIELD_WIDTH, FIELD_DEPTH) },
-    uWakes: { value: wakes },
   };
 
-  // --- Spring field (Tier 1) -------------------------------------------------
-  let fboA: THREE.WebGLRenderTarget | null = null;
-  let fboB: THREE.WebGLRenderTarget | null = null;
-  let simScene: THREE.Scene | null = null;
-  let simCamera: THREE.OrthographicCamera | null = null;
-  let simMaterial: THREE.ShaderMaterial | null = null;
-  let simQuad: THREE.Mesh | null = null;
-  if (useFbo) {
-    fboA = makeSpringTarget(springRes);
-    fboB = makeSpringTarget(springRes);
-    shared.uSpringField.value = fboA.texture;
-    simScene = new THREE.Scene();
-    simCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    simMaterial = new THREE.ShaderMaterial({
-      vertexShader: simVertexShader,
-      fragmentShader: springSimFragmentShader,
-      depthTest: false,
-      depthWrite: false,
-      uniforms: {
-        uPrevState: { value: null },
-        uResolution: { value: new THREE.Vector2(springRes, springRes) },
-        uDt: { value: 1 / 60 },
-        uFieldSize: { value: new THREE.Vector2(FIELD_WIDTH, FIELD_DEPTH) },
-        uPrevMouse: { value: new THREE.Vector2(-99, -99) },
-        uCurrMouse: { value: new THREE.Vector2(-99, -99) },
-        uMouseVel: { value: new THREE.Vector2(0, 0) },
-        uMouseActive: { value: 0 },
-        uReset: { value: 1 },
-      },
-    });
-    simQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial);
-    simQuad.frustumCulled = false;
-    simScene.add(simQuad);
-  }
+  // --- Spring field ----------------------------------------------------------
+  const fboA = makeSpringTarget(springRes);
+  const fboB = makeSpringTarget(springRes);
+  shared.uSpringField.value = fboA.texture;
+  const simScene = new THREE.Scene();
+  const simCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const simMaterial = new THREE.ShaderMaterial({
+    vertexShader: simVertexShader,
+    fragmentShader: springSimFragmentShader,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: {
+      uPrevState: { value: null },
+      uResolution: { value: new THREE.Vector2(springRes, springRes) },
+      uDt: { value: 1 / 60 },
+      uFieldSize: { value: new THREE.Vector2(FIELD_WIDTH, FIELD_DEPTH) },
+      uPrevMouse: { value: new THREE.Vector2(-99, -99) },
+      uCurrMouse: { value: new THREE.Vector2(-99, -99) },
+      uMouseVel: { value: new THREE.Vector2(0, 0) },
+      uMouseActive: { value: 0 },
+      uReset: { value: 1 },
+    },
+  });
+  const simQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial);
+  simQuad.frustumCulled = false;
+  simScene.add(simQuad);
 
   // --- Sky -------------------------------------------------------------------
   const skyMaterial = new THREE.ShaderMaterial({
@@ -1786,27 +1743,10 @@ export function createNurtureMeadowScene(
   // the stroke is dropped between steps.
   const stamp = new THREE.Vector2();
   let hasStamp = false;
-  let wakeCursor = 0;
-  let lastWakeTime = -10;
-  const lastWakePos = new THREE.Vector2(999, 999);
 
   let time = 0;
   let simFrame = 0;
   let simAccumulator = 0;
-
-  const spawnWake = (x: number, z: number, strength: number) => {
-    let slot = wakeCursor;
-    let oldest = Infinity;
-    for (let i = 0; i < WAKE_SLOTS; i++) {
-      const start = wakes[i].w > 0 ? wakes[i].z : -Infinity;
-      if (start < oldest) {
-        oldest = start;
-        slot = i;
-      }
-    }
-    wakes[slot].set(x, z, time, strength);
-    wakeCursor = (slot + 1) % WAKE_SLOTS;
-  };
 
   let bleedPx = 0;
   let canvasH = height;
@@ -1888,21 +1828,10 @@ export function createNurtureMeadowScene(
           spawnPollen(hitVec.x, hitVec.y + 0.35, hitVec.z);
         }
       }
-
-      // Tier 2: analytical damped wakes laid along the stroke
-      if (!useFbo) {
-        const moved = Math.hypot(hitVec.x - lastWakePos.x, hitVec.z - lastWakePos.y);
-        if (moved > 0.38 && time - lastWakeTime > 0.07) {
-          spawnWake(hitVec.x, hitVec.z, THREE.MathUtils.clamp(0.35 + speed * 0.06, 0.4, 0.95));
-          lastWakePos.set(hitVec.x, hitVec.z);
-          lastWakeTime = time;
-        }
-      }
     } else {
       hasPrevHit = false;
       hasStamp = false;
       smoothedVel.multiplyScalar(Math.exp(-dt * 7));
-      lastWakePos.set(999, 999);
     }
 
     // Taps part the grass in a soft ring (touch devices especially)
@@ -1911,7 +1840,6 @@ export function createNurtureMeadowScene(
         ndc.set(tap.x, tap.y);
         raycaster.setFromCamera(ndc, camera);
         if (intersectMeadowTerrain(raycaster.ray, hitVec)) {
-          if (!useFbo) spawnWake(hitVec.x, hitVec.z, 0.9);
           if (pollenCount > 0) {
             spawnPollen(hitVec.x, hitVec.y + 0.4, hitVec.z);
             spawnPollen(hitVec.x, hitVec.y + 0.4, hitVec.z);
@@ -1923,7 +1851,7 @@ export function createNurtureMeadowScene(
     if (motion) updatePollen(dt);
 
     // Step the spring field at a steady 60 Hz
-    if (useFbo && simMaterial && simScene && simCamera && fboA && fboB && motion) {
+    if (motion) {
       const fixedStep = 1 / 60;
       simAccumulator += dt;
       let steps = 0;
@@ -1982,10 +1910,10 @@ export function createNurtureMeadowScene(
     petalsGeometry.dispose();
     pollenMaterial.dispose();
     pollenGeometry.dispose();
-    simMaterial?.dispose();
-    simQuad?.geometry.dispose();
-    fboA?.dispose();
-    fboB?.dispose();
+    simMaterial.dispose();
+    simQuad.geometry.dispose();
+    fboA.dispose();
+    fboB.dispose();
   };
 
   resize(width, height);
@@ -1993,7 +1921,7 @@ export function createNurtureMeadowScene(
   return {
     scene,
     camera,
-    passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
+    passes: [{ scene: simScene, camera: simCamera }],
     horizonUv: () => canvasY((framing.horizonNdc + 1) * 0.5, canvasH, bleedPx),
     resize,
     update,

@@ -216,32 +216,18 @@ The legacy `WaterShader.jsx` was simply turned off on mobile (`!isMobile`), leav
 
 ### A. Real WebGL Capability Detection (Not Just User-Agent Sniffing)
 Never rely solely on `/Mobi|Android|iPhone/i` UA strings! On canvas creation, explicitly probe:
-1. Viewport / pointer tier: `isCompact = window.innerWidth < 768` and `isTouch = matchMedia('(pointer: coarse)').matches`.
+1. Viewport / pointer class: `isCompact = window.innerWidth < 768` and `isTouch = matchMedia('(pointer: coarse)').matches`.
 2. WebGL2 support (`gl.capabilities.isWebGL2`).
 3. **Live FBO HalfFloat Completeness Probe:** Create a tiny `4×4` `WebGLRenderTarget` with `HalfFloatType` + `LinearFilter`, bind it, and check `rawGl.checkFramebufferStatus(rawGl.FRAMEBUFFER) === rawGl.FRAMEBUFFER_COMPLETE` (also verify `EXT_color_buffer_half_float` / `EXT_color_buffer_float` + `OES_texture_half_float_linear` on WebGL1). Dispose the probe target immediately.
 
-### B. Dark Mode Water Stage on Mobile — 3-Tier Graceful Strategy
-1. **Tier 1 — Capable Modern Mobile (WebGL2 + Verified `HalfFloat` FBO):**
-   * Run the real ping-pong wave FBO at a lightweight `192×192` or `256×256` resolution, `dpr={[1, 1.25]}`, lighter ocean mesh (`64×48`), 2-octave sky FBM, and smooth touch-tap & touch-drag ripples (`pointerdown` / `pointermove` without blocking link taps).
-2. **Tier 2 — Zero-FBO Analytical Mirror Water Fallback (Works on 100% of Mobile WebGL Devices!):**
-   * If `HalfFloat` FBO probing fails OR on constrained mobile GPUs (e.g. older iOS Safari / low-end Android): render the **exact same *Get Your Wish* mirror water stage & glowing sky screen reflection**, replacing the FBO texture sample with an **analytical single-pass ripple ring buffer** (`uniform vec4 uRipples[8]` storing `(worldX, worldZ, startTime, amplitude)`).
-   * In the fragment shader, sum each active ring analytically:
-     ```glsl
-     // Traveling circular wave + exact analytical radial derivative for crisp glossy normals
-     float r = length(vWorldPos.xz - rp.xy);
-     float age = uTime - rp.z;
-     float waveFront = r - age * 2.6;
-     float env = exp(-waveFront * waveFront * 2.8) * exp(-age * 1.15) * smoothstep(0.0, 0.08, age);
-     float dWave = cos(waveFront * 9.5) * env * rp.w;
-     ```
-   * Every tap on the water spawns a crisp, expanding concentric reflection ripple, and quiet ambient droplets keep the mirror alive automatically. **Zero FBOs, zero float-texture glitches, locked 60fps on every phone!**
-3. **Tier 3 — No WebGL / Software Renderer / Reduced Motion Static Fallback:**
-   * Clean CSS background mirroring the *Get Your Wish* dark void, the soft-edged sky screen with its raised stage light, and a dimmer reflection below the waterline, so the homepage still feels intentional and legible.
-     * It doubles as the instant first paint the canvas fades in over, so it must track the WebGL composition.
-     * It is hidden (`html[data-hero-canvas="live"]`) once the canvas fully covers it, so theme toggles never repaint it.
+### B. One Production Path, Flat Backdrop Fallback
+* There are no quality tiers and no URL selectors: every device that runs the hero runs the same scenes with real FBO physics, scaled only by the desktop / phone presets in `capabilities.ts` (constrained phones get the lighter phone preset: 256 water sim, 128 spring field, ~25% lighter planting, no MSAA targets).
+* The scene needs hardware WebGL2 with a verified `HalfFloat` FBO. Without it (no WebGL2, a software renderer, a failed FBO probe or a lost context) the hero keeps its flat CSS backdrop.
+* `HeroBackdrop` is a flat theme colour: the meadow sky behind the title (`#5b9ee7`) in light, the night void (`#07080b`) in dark. It is the instant first paint the canvas fades in over and keeps the white title readable meanwhile. It is hidden (`html[data-hero-canvas="live"]`) once the canvas fully covers it.
+* The phone water preset keeps smooth touch-tap and touch-drag ripples (`pointerdown` / `pointermove`, never blocking link taps).
 
 ### C. Light Mode Meadow on Mobile
-* Cap DPR at `[1, 1.25]`, scale blade/tuft density cleanly (baseline `340` tufts × `12–18` blades + `1,300` filler blades + `800` ground-cover cards, 5-segment blades at `1.35×` width, scaled by visible hillside spread and planted ~25% lighter on no-FBO phones, so the hillside stays lush without heavy overdraw), drop spring FBO to `128×128` (or a lightweight 6-point analytical damped touch-wake uniform array if `HalfFloat` FBO is unsupported).
+* Scale blade/tuft density cleanly (baseline `340` tufts × `12–18` blades + `1,300` filler blades + `800` ground-cover cards at `1.35×` width, scaled by visible hillside spread and planted ~25% lighter on constrained phones, so the hillside stays lush without heavy overdraw). The spring FBO is `256×256` on capable phones and `128×128` on constrained ones.
 * Support gentle touch-drag brushing on the meadow (`pointermove` / `pointerdown` passive listeners — never call `preventDefault()` so normal browser gestures and link taps always work cleanly).
 * **Portrait Aspect Camera Framing (`aspect < 0.85`):** On tall portrait phones (`375×812`, `390×844`), adjust vertical FOV / camera pitch slightly so the horizon remains cleanly around the lower ~38–42% of the screen—keeping the grass/water clearly visible without colliding with the stacked mobile headline and buttons!
 
@@ -254,13 +240,13 @@ Never rely solely on `/Mobi|Android|iPhone/i` UA strings! On canvas creation, ex
 app/components/hero/
 ├── HeroCanvas.tsx          # Single persistent <Canvas>, idle pre-warmer, GPU crossfade compositor, DPR frame-time governor
 ├── HeroOverlay.tsx         # Foreground Liner Notes typography, bio, uniform smooth translucent buttons (no draft dock)
-├── HeroBackdrop.tsx        # Tier 3 static CSS backdrop + instant first paint under the canvas
-├── capabilities.ts         # WebGL2 + HalfFloat FBO probe, device tiering, mobile/reduced-motion detection, quality presets
+├── HeroBackdrop.tsx        # Flat theme-colour backdrop: first paint under the canvas, fallback where WebGL2 can't run
+├── capabilities.ts         # WebGL2 + HalfFloat FBO probe, mobile/reduced-motion detection, desktop/phone quality presets
 ├── compositor.ts           # Horizon-sweep dissolve pass + shared 520ms easing
 ├── framing.ts              # Landscape ↔ portrait camera framing (horizon placement)
 ├── types.ts                # HeroScene / input contracts
 ├── NurtureMeadowScene.ts   # Painterly sky + clouds + botanical clumped meadow + cloud shadows + damp spring FBO
-└── NightWaterStage.ts      # Get Your Wish mirror water stage + shared analytical sky + FBO (Tier 1) & analytical ripples (Tier 2)
+└── NightWaterStage.ts      # Get Your Wish mirror water stage + shared analytical sky + ping-pong wave FBO
 ```
 
 ### Production Performance Notes (Nov 2026 pass)
@@ -294,14 +280,14 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * `IDLE_PACE_AFTER_MS` in `HeroCanvas.tsx` tunes it; `Infinity` disables it.
 
 ### Phone & iOS Safari Notes (Nov 2026, tested on an iPhone 17 / iOS 26 Safari)
-**Quality tier on iPhone:**
+**Quality on iPhone:**
 * WebKit clamps `hardwareConcurrency` to 2–4 on iOS, so the core count is ignored on Apple mobile devices.
-* Capable phones get the compact Tier 1: DPR up to 2, 4× MSAA targets, and desktop-grade water (512 sim). The frame-time governor still steps down a phone that can't keep up.
-* **Wide gamut:** on Display-P3 screens the drawing buffer is tagged `display-p3`. `outputGamut()` (`gamut.ts`) leans colours 65% toward P3, and `?gamut=srgb|exact|vivid|max` overrides it.
+* Capable phones get the phone preset at full strength: DPR up to 2, 4× MSAA targets, and desktop-grade water (512 sim). The frame-time governor still steps down a phone that can't keep up.
+* **Wide gamut:** on Display-P3 screens the drawing buffer is tagged `display-p3`. `outputGamut()` (`gamut.ts`) leans colours 65% toward P3.
 
 **Floating toolbar (iOS 26):**
 * Safari clips `position: fixed` layers at its floating toolbar and paints a flat tint below them. On touch devices the hero layers are therefore in-document (`position: absolute`).
-* Safari only draws page content under the toolbar as far as the document reaches, and `100lvh` stops 58pt above the bottom of an iPhone 17 screen (`?herodebug` measured inner 714, lvh 754, screen 874).
+* Safari only draws page content under the toolbar as far as the document reaches, and `100lvh` stops 58pt above the bottom of an iPhone 17 screen (measured on-device: inner 714, lvh 754, screen 874).
 * `safariChrome.ts` therefore sets `--hero-bleed` (screen height − lvh, overshooting off-screen by the status-bar height) and the layers run that far past 100lvh.
 * The scenes stay composed for the 100lvh frame. `applyBleed()` (`framing.ts`) extends the camera's view downward with `setViewOffset`, so everything above the bleed is unchanged; only the film-grain dither differs.
 * While the hero fits on screen, single-finger panning is held still so the run-off never scrolls into view. Pinch-zoom, and panning once zoomed in, still work.
@@ -315,12 +301,9 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * Alpha-to-coverage also stores each feathered edge's alpha in the canvas. Chrome and iOS Safari composited the opaque (`alpha: false`) canvas with it anyway, so the near-white page background showed through every blade edge as a light, speckled outline (a fifth of the meadow's pixels on desktop).
 * Flora draws now mask alpha writes (`keepCanvasOpaque`) and keep their coverage. A distance-weighted lift in the grass shader keeps the meadow at the brightness it was approved at, which the leak used to supply. The phone frame matches its earlier tone within 1–5% per band; desktop, which leaked far more, reads a deeper green.
 * Every device uses `clean` edges: a one-pixel feather snapped to whole MSAA samples, so there is no in-between coverage for the GPU to dither.
-* `?blades=soft|crisp` switches to the other treatments for QA.
-
-**On-device QA:** `/?herodebug` shows tier, gamut, MSAA, blade mode, renderer, DPR and fps, plus viewport and safe-area metrics and the bleed.
 
 ### Cleanup Notes
-* Once Mark signs off on the final Phase 6 hero, verify nothing else imports legacy `app/components/WaterShader.jsx` or `app/utils/shaders.ts` and remove them cleanly during Pre-Launch QA.
+* The legacy `app/components/WaterShader.jsx` and `app/utils/shaders.ts` were removed with the first final version (Nov 2026).
 * Never leave the temporary `draft` control bar from commit `0d587a4` in the production hero.
 
 ### Final QA Checklist (Before Phase 6 Sign-Off)
@@ -330,4 +313,4 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * [ ] **Buttons & NavBar:** `Resume`, `LinkedIn`, and `GitHub` are uniform flat borderless translucent buttons with buttery smooth hover transitions (`200ms ease-out`); `NavBar` preserves the original borderless floating design with no outer capsule or beveled borders, and zero regression on `/about`, `/blog`, `/contact`.
 * [ ] **Light Mode Botanical Realism:** Grass breaks clearly beyond "typical poly grass" (organic clumping, species/wildflower variety, curved normals/SSS, drifting cloud shadows, weighty damp spring physics, calm breeze, rock-steady camera, no foreground stalks stabbing the headline).
 * [ ] **Dark Mode Water Stage:** Matches or exceeds `0d587a4`'s *"stunning"* mirror reflections, with the stage light glowing from behind the text (sky never darker than its reflection), strong continuous cursor wakes, and crisp click-to-splash ripples.
-* [ ] **Mobile & Accessibility:** Verified at `375px`, `390px`, `768px`, `1280px`, `1440px+` (including mobile analytical water fallback if FBO unavailable), keyboard focus rings visible on all links/buttons, and `prefers-reduced-motion: reduce` respected cleanly.
+* [ ] **Mobile & Accessibility:** Verified at `375px`, `390px`, `768px`, `1280px`, `1440px+` (and the flat backdrop where WebGL2 can't run), keyboard focus rings visible on all links/buttons, and `prefers-reduced-motion: reduce` respected cleanly.

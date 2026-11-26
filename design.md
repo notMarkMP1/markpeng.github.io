@@ -153,7 +153,7 @@ Strictly preserve the existing 4 routes:
 ### Phase 6 — Homepage (`/`) *Nurture* Hero Overhaul *(Spec Locked in [hero.md](./hero.md) — Ready for Final Implementation)*
 * [x] Explored 5 live interactive prototype iterations across Light (*Nurture* cerulean sky, cumulus clouds, rolling slightly-damp tall grass meadow) and Dark (*Get Your Wish* shallow obsidian mirror water stage with glowing waterline sky reflections and interactive cursor/click ripples).
 * [x] Preserved prototype snapshot safely off the final branch on `proto/phase6-hero-draft` (commit `0d587a4`) for reference only.
-* [x] Authored complete implementation & graphics-engineering spec in [hero.md](./hero.md) covering foreground craft (single-line sky-tinted atmospheric title, smooth borderless translucent buttons, original floating navbar), non-poly botanical/painterly grass upgrades, zero-latency pre-warmed GPU theme crossfade, and 3-tier mobile WebGL/analytical water fallback.
+* [x] Authored complete implementation & graphics-engineering spec in [hero.md](./hero.md) covering foreground craft (single-line sky-tinted atmospheric title, smooth borderless translucent buttons, original floating navbar), non-poly botanical/painterly grass upgrades, zero-latency pre-warmed GPU theme crossfade, and a single production render path for every capable device, with a flat theme-colour backdrop where WebGL2 can't run.
 * [ ] Final production implementation of `/` per [hero.md](./hero.md) and cleanup of legacy `WaterShader.jsx` / `shaders.ts`.
 
 ### Pre-Launch QA & Cleanup

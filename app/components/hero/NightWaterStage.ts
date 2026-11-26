@@ -8,7 +8,7 @@ import type { HeroFrameOptions, HeroInput, HeroScene } from './types';
  * Dark Mode — "Get Your Wish" mirror water stage (hero.md §4).
  * Visual + mathematical foundation preserved from prototype 0d587a4
  * (`water-stage` mode), with the fireworks/moonlit draft modes removed,
- * a Tier 2 analytical ripple path, portrait framing and output dithering.
+ * portrait framing and output dithering.
  */
 
 // Square 1:1 world-space FBO covering the visible obsidian mirror stage
@@ -18,7 +18,6 @@ const SEA_SPAN = 22.0; // X: [-11, +11], Z: [-15.5, +6.5]
 
 const WAVE_DELTA = 1.12;
 const WAVE_PRESSURE = 0.99;
-const RIPPLE_SLOTS = 8;
 /** Capsule wake radius in sim UV (≈0.34 world units). */
 const WAKE_RADIUS = 0.0155;
 /** Wake strength per unit of on-screen glide (aspect-corrected NDC per 60 Hz step). */
@@ -164,7 +163,7 @@ const SHARED_SKY_GLSL = /* glsl */ `
 `;
 
 // ---------------------------------------------------------------------------
-// 1. Ping-pong wave heightfield (Tier 1)
+// 1. Ping-pong wave heightfield
 // ---------------------------------------------------------------------------
 const simVertexShader = /* glsl */ `
   varying vec2 vUv;
@@ -295,13 +294,11 @@ const waterVertexShader = /* glsl */ `
     vec4 worldPos = modelMatrix * vec4(position, 1.0);
     vec2 simUv = (worldPos.xz - uSeaMin) / uSeaSpan;
 
-  #ifdef USE_RIPPLE_FBO
     float simMask =
       smoothstep(0.0, 0.07, simUv.x) * smoothstep(0.0, 0.07, 1.0 - simUv.x) *
       smoothstep(0.0, 0.07, simUv.y) * smoothstep(0.0, 0.07, 1.0 - simUv.y);
     float rippleH = texture2D(uRippleMap, clamp(simUv, 0.0, 1.0)).x * simMask;
     worldPos.y += rippleH * 0.19;
-  #endif
 
     vWorldPos = worldPos.xyz;
     vSimUv = simUv;
@@ -318,7 +315,6 @@ const waterFragmentShader = /* glsl */ `
   uniform float uTime;
   uniform sampler2D uRippleMap;
   uniform float uSimTexel;
-  uniform vec4 uRipples[${RIPPLE_SLOTS}];
 
   varying vec3 vWorldPos;
   varying vec2 vSimUv;
@@ -338,7 +334,6 @@ const waterFragmentShader = /* glsl */ `
   void main() {
     float t = uTime;
 
-  #ifdef USE_RIPPLE_FBO
     // Smooth 5-tap filtered gradient from the wave simulation
     float simMask =
       smoothstep(0.0, 0.07, vSimUv.x) * smoothstep(0.0, 0.07, 1.0 - vSimUv.x) *
@@ -349,22 +344,6 @@ const waterFragmentShader = /* glsl */ `
     vec2 gX = texture2D(uRippleMap, uv + vec2(eps, 0.0)).zw + texture2D(uRippleMap, uv - vec2(eps, 0.0)).zw;
     vec2 gY = texture2D(uRippleMap, uv + vec2(0.0, eps)).zw + texture2D(uRippleMap, uv - vec2(0.0, eps)).zw;
     vec2 rippleGrad = ((gC * 2.0 + gX + gY) / 6.0) * simMask * 4.4;
-  #else
-    // Tier 2: analytical ring buffer of travelling circular waves
-    vec2 rippleGrad = vec2(0.0);
-    for (int i = 0; i < ${RIPPLE_SLOTS}; i++) {
-      vec4 rp = uRipples[i];
-      if (rp.w > 0.001) {
-        vec2 d = vWorldPos.xz - rp.xy;
-        float r = length(d);
-        float age = t - rp.z;
-        float waveFront = r - age * 2.6;
-        float env = exp(-waveFront * waveFront * 2.8) * exp(-age * 1.15) * smoothstep(0.0, 0.08, age);
-        float dWave = cos(waveFront * 9.5) * env * rp.w;
-        rippleGrad += (d / max(r, 0.001)) * dWave * 0.62;
-      }
-    }
-  #endif
 
     // Far water settles into a still, perfect mirror (no grazing-angle shimmer),
     // so the screen meets its own reflection exactly on the waterline
@@ -431,11 +410,9 @@ export function createNightWaterStage(
   width: number,
   height: number
 ): HeroScene {
-  const useFbo = quality.simRes > 0;
   const simRes = quality.simRes;
   // Shared by the sky + water colour passes (the wave sim has its own material)
   const defines: Record<string, string | number> = { SKY_OCTAVES: quality.skyOctaves, ...gamutDefines(quality.p3Vivid) };
-  if (useFbo) defines.USE_RIPPLE_FBO = '';
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FRAMING.fov, 1, 0.1, 360);
@@ -443,41 +420,32 @@ export function createNightWaterStage(
   const lookTarget = new THREE.Vector3(0, framing.lookY, framing.lookZ);
   camera.lookAt(lookTarget);
 
-  // --- Wave simulation (Tier 1) -------------------------------------------
-  let fboA: THREE.WebGLRenderTarget | null = null;
-  let fboB: THREE.WebGLRenderTarget | null = null;
-  let simScene: THREE.Scene | null = null;
-  let simCamera: THREE.OrthographicCamera | null = null;
-  let simMaterial: THREE.ShaderMaterial | null = null;
-  let simQuad: THREE.Mesh | null = null;
-
-  if (useFbo) {
-    fboA = makeSimTarget(simRes);
-    fboB = makeSimTarget(simRes);
-    simScene = new THREE.Scene();
-    simCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    simMaterial = new THREE.ShaderMaterial({
-      vertexShader: simVertexShader,
-      fragmentShader: simFragmentShader,
-      depthTest: false,
-      depthWrite: false,
-      uniforms: {
-        iFrame: { value: 0 },
-        iPrevMouse: { value: new THREE.Vector2(0.5, 0.5) },
-        iCurrMouse: { value: new THREE.Vector2(0.5, 0.5) },
-        iMouseGain: { value: 0 },
-        iMouseRadius: { value: WAKE_RADIUS },
-        iDrop: { value: new THREE.Vector3(0.5, 0.5, 0) },
-        iResolution: { value: new THREE.Vector2(simRes, simRes) },
-        iChannel0: { value: null },
-        delta: { value: WAVE_DELTA },
-        iPressure: { value: WAVE_PRESSURE },
-      },
-    });
-    simQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial);
-    simQuad.frustumCulled = false;
-    simScene.add(simQuad);
-  }
+  // --- Wave simulation ----------------------------------------------------
+  const fboA = makeSimTarget(simRes);
+  const fboB = makeSimTarget(simRes);
+  const simScene = new THREE.Scene();
+  const simCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const simMaterial = new THREE.ShaderMaterial({
+    vertexShader: simVertexShader,
+    fragmentShader: simFragmentShader,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: {
+      iFrame: { value: 0 },
+      iPrevMouse: { value: new THREE.Vector2(0.5, 0.5) },
+      iCurrMouse: { value: new THREE.Vector2(0.5, 0.5) },
+      iMouseGain: { value: 0 },
+      iMouseRadius: { value: WAKE_RADIUS },
+      iDrop: { value: new THREE.Vector3(0.5, 0.5, 0) },
+      iResolution: { value: new THREE.Vector2(simRes, simRes) },
+      iChannel0: { value: null },
+      delta: { value: WAVE_DELTA },
+      iPressure: { value: WAVE_PRESSURE },
+    },
+  });
+  const simQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial);
+  simQuad.frustumCulled = false;
+  simScene.add(simQuad);
 
   // --- Sky backdrop --------------------------------------------------------
   const skyMaterial = new THREE.ShaderMaterial({
@@ -500,7 +468,6 @@ export function createNightWaterStage(
   scene.add(skyQuad);
 
   // --- Mirror water --------------------------------------------------------
-  const ripples = Array.from({ length: RIPPLE_SLOTS }, () => new THREE.Vector4(0, 0, -100, 0));
   const waterMaterial = new THREE.ShaderMaterial({
     vertexShader: waterVertexShader,
     fragmentShader: waterFragmentShader,
@@ -508,11 +475,10 @@ export function createNightWaterStage(
     toneMapped: false,
     uniforms: {
       uTime: { value: 0 },
-      uRippleMap: { value: fboA ? fboA.texture : null },
-      uSimTexel: { value: useFbo ? 1 / simRes : 0 },
+      uRippleMap: { value: fboA.texture },
+      uSimTexel: { value: 1 / simRes },
       uSeaMin: { value: new THREE.Vector2(SEA_MIN_X, SEA_MIN_Z) },
       uSeaSpan: { value: SEA_SPAN },
-      uRipples: { value: ripples },
     },
   });
   const waterGeometry = new THREE.PlaneGeometry(58, 38, quality.segX, quality.segZ);
@@ -561,10 +527,6 @@ export function createNightWaterStage(
   let simFrame = 0;
   let simAccumulator = 0;
   let nextAmbientDrop = 0.8;
-  let rippleCursor = 0;
-  let lastWakeRippleTime = -10;
-  const lastWakeRippleNdc = new THREE.Vector2();
-  let hasWakeRipple = false;
 
   const projectToSea = (x: number, y: number): THREE.Vector2 | null => {
     ndc.set(x, y);
@@ -573,21 +535,6 @@ export function createNightWaterStage(
       return new THREE.Vector2(seaHit.x, seaHit.z);
     }
     return null;
-  };
-
-  const spawnRipple = (x: number, z: number, amplitude: number) => {
-    // Overwrite the oldest slot of the analytical ring buffer
-    let slot = rippleCursor;
-    let oldest = Infinity;
-    for (let i = 0; i < RIPPLE_SLOTS; i++) {
-      const start = ripples[i].w > 0 ? ripples[i].z : -Infinity;
-      if (start < oldest) {
-        oldest = start;
-        slot = i;
-      }
-    }
-    ripples[slot].set(x, z, time, amplitude);
-    rippleCursor = (slot + 1) % RIPPLE_SLOTS;
   };
 
   const queueDrop = (u: number, v: number, strength: number) => {
@@ -655,10 +602,7 @@ export function createNightWaterStage(
     } else {
       hasPointer = false;
     }
-    if (!inSea) {
-      hasStamp = false;
-      hasWakeRipple = false;
-    }
+    if (!inSea) hasStamp = false;
 
     // Wakes are sized by on-screen glide rather than world distance, so drifting up
     // toward the horizon (where one pixel spans a lot of water) feels as even as
@@ -667,22 +611,6 @@ export function createNightWaterStage(
     const wakeRadius = WAKE_RADIUS * (1 + depthT * 0.5);
     const wakeAtten = 1 - depthT * 0.35;
 
-    // Tier 2: analytical wake rings laid along the glide, spaced evenly on screen
-    if (!useFbo && inSea) {
-      if (!hasWakeRipple) {
-        lastWakeRippleNdc.copy(pointer);
-        hasWakeRipple = true;
-      } else {
-        const moved = Math.hypot((pointer.x - lastWakeRippleNdc.x) * aspect, pointer.y - lastWakeRippleNdc.y) * glideScale;
-        if (moved > 0.1 && time - lastWakeRippleTime > 0.12) {
-          const amp = moved > 0.6 ? 0.3 : THREE.MathUtils.clamp(0.22 + moved * 0.75, 0.24, 0.5);
-          spawnRipple(SEA_MIN_X + currU * SEA_SPAN, SEA_MIN_Z + currV * SEA_SPAN, amp * wakeAtten);
-          lastWakeRippleNdc.copy(pointer);
-          lastWakeRippleTime = time;
-        }
-      }
-    }
-
     // --- Click / tap splash or quiet ambient droplet ------------------------
     if (motion && input.taps.length > 0) {
       for (const tap of input.taps) {
@@ -690,84 +618,78 @@ export function createNightWaterStage(
         if (!tapHit) continue;
         const u = (tapHit.x - SEA_MIN_X) / SEA_SPAN;
         const v = (tapHit.y - SEA_MIN_Z) / SEA_SPAN;
-        if (u > 0.04 && u < 0.96 && v > 0.04 && v < 0.96) {
-          if (useFbo) queueDrop(u, v, 0.92);
-          else spawnRipple(tapHit.x, tapHit.y, 0.92);
-        }
+        if (u > 0.04 && u < 0.96 && v > 0.04 && v < 0.96) queueDrop(u, v, 0.92);
       }
     } else if (motion && time > nextAmbientDrop) {
       nextAmbientDrop = time + 2.5 + Math.random() * 2.4;
       const u = 0.28 + Math.random() * 0.44;
       const v = 0.34 + Math.random() * 0.46;
-      if (useFbo) queueDrop(u, v, 0.32);
-      else spawnRipple(SEA_MIN_X + u * SEA_SPAN, SEA_MIN_Z + v * SEA_SPAN, 0.32);
+      queueDrop(u, v, 0.32);
     }
 
     // --- Fixed 60 Hz ping-pong wave step (max 2 substeps / frame) ------------
-    if (useFbo && simMaterial && simScene && simCamera && fboA && fboB) {
-      if (!motion) return;
-      const fixedStep = 1 / 60;
-      simAccumulator += dt;
-      let steps = 0;
-      while (simAccumulator >= fixedStep && steps < 2) {
-        simAccumulator -= fixedStep;
-        steps++;
+    if (!motion) return;
+    const fixedStep = 1 / 60;
+    simAccumulator += dt;
+    let steps = 0;
+    while (simAccumulator >= fixedStep && steps < 2) {
+      simAccumulator -= fixedStep;
+      steps++;
+    }
+    // Never let a backlog build up behind a slow frame
+    simAccumulator = Math.min(simAccumulator, fixedStep);
+    if (steps === 0) return;
+
+    // Sweep from the last stamped point to the pointer, split evenly across steps
+    let fromU = currU;
+    let fromV = currV;
+    let glide = 0;
+    let entering = false;
+    if (inSea) {
+      if (hasStamp && Math.hypot(currU - stampUv.x, currV - stampUv.y) < 0.4) {
+        fromU = stampUv.x;
+        fromV = stampUv.y;
+        glide = Math.hypot((pointer.x - stampNdc.x) * aspect, pointer.y - stampNdc.y) * glideScale;
+      } else {
+        entering = true;
       }
-      // Never let a backlog build up behind a slow frame
-      simAccumulator = Math.min(simAccumulator, fixedStep);
-      if (steps === 0) return;
+    }
 
-      // Sweep from the last stamped point to the pointer, split evenly across steps
-      let fromU = currU;
-      let fromV = currV;
-      let glide = 0;
-      let entering = false;
-      if (inSea) {
-        if (hasStamp && Math.hypot(currU - stampUv.x, currV - stampUv.y) < 0.4) {
-          fromU = stampUv.x;
-          fromV = stampUv.y;
-          glide = Math.hypot((pointer.x - stampNdc.x) * aspect, pointer.y - stampNdc.y) * glideScale;
-        } else {
-          entering = true;
-        }
+    const previousTarget = gl.getRenderTarget();
+    for (let i = 0; i < steps; i++) {
+      simFrame++;
+      const src = simFrame % 2 === 0 ? fboA : fboB;
+      const dst = simFrame % 2 === 0 ? fboB : fboA;
+      const a = i / steps;
+      const b = (i + 1) / steps;
+
+      let gain = 0;
+      if (entering) {
+        gain = i === 0 ? 0.24 : 0; // crisp entry ring
+      } else if (inSea && glide > 0.0008) {
+        gain = THREE.MathUtils.clamp((glide / steps) * WAKE_GAIN_PER_SCREEN, 0.14, 0.62) * wakeAtten;
       }
+      const drop = pendingDrops.shift();
 
-      const previousTarget = gl.getRenderTarget();
-      for (let i = 0; i < steps; i++) {
-        simFrame++;
-        const src = simFrame % 2 === 0 ? fboA : fboB;
-        const dst = simFrame % 2 === 0 ? fboB : fboA;
-        const a = i / steps;
-        const b = (i + 1) / steps;
+      simMaterial.uniforms.iFrame.value = simFrame;
+      simMaterial.uniforms.iPrevMouse.value.set(fromU + (currU - fromU) * a, fromV + (currV - fromV) * a);
+      simMaterial.uniforms.iCurrMouse.value.set(fromU + (currU - fromU) * b, fromV + (currV - fromV) * b);
+      simMaterial.uniforms.iMouseGain.value = gain;
+      simMaterial.uniforms.iMouseRadius.value = wakeRadius;
+      if (drop) simMaterial.uniforms.iDrop.value.copy(drop);
+      else simMaterial.uniforms.iDrop.value.set(0.5, 0.5, 0);
+      simMaterial.uniforms.iChannel0.value = src.texture;
 
-        let gain = 0;
-        if (entering) {
-          gain = i === 0 ? 0.24 : 0; // crisp entry ring
-        } else if (inSea && glide > 0.0008) {
-          gain = THREE.MathUtils.clamp((glide / steps) * WAKE_GAIN_PER_SCREEN, 0.14, 0.62) * wakeAtten;
-        }
-        const drop = pendingDrops.shift();
+      gl.setRenderTarget(dst);
+      gl.render(simScene, simCamera);
+      waterMaterial.uniforms.uRippleMap.value = dst.texture;
+    }
+    gl.setRenderTarget(previousTarget);
 
-        simMaterial.uniforms.iFrame.value = simFrame;
-        simMaterial.uniforms.iPrevMouse.value.set(fromU + (currU - fromU) * a, fromV + (currV - fromV) * a);
-        simMaterial.uniforms.iCurrMouse.value.set(fromU + (currU - fromU) * b, fromV + (currV - fromV) * b);
-        simMaterial.uniforms.iMouseGain.value = gain;
-        simMaterial.uniforms.iMouseRadius.value = wakeRadius;
-        if (drop) simMaterial.uniforms.iDrop.value.copy(drop);
-        else simMaterial.uniforms.iDrop.value.set(0.5, 0.5, 0);
-        simMaterial.uniforms.iChannel0.value = src.texture;
-
-        gl.setRenderTarget(dst);
-        gl.render(simScene, simCamera);
-        waterMaterial.uniforms.uRippleMap.value = dst.texture;
-      }
-      gl.setRenderTarget(previousTarget);
-
-      if (inSea) {
-        stampUv.set(currU, currV);
-        stampNdc.copy(pointer);
-        hasStamp = true;
-      }
+    if (inSea) {
+      stampUv.set(currU, currV);
+      stampNdc.copy(pointer);
+      hasStamp = true;
     }
   };
 
@@ -777,10 +699,10 @@ export function createNightWaterStage(
     waterMaterial.dispose();
     waterGeometry.dispose();
     apronGeometry.dispose();
-    simMaterial?.dispose();
-    simQuad?.geometry.dispose();
-    fboA?.dispose();
-    fboB?.dispose();
+    simMaterial.dispose();
+    simQuad.geometry.dispose();
+    fboA.dispose();
+    fboB.dispose();
   };
 
   resize(width, height);
@@ -788,7 +710,7 @@ export function createNightWaterStage(
   return {
     scene,
     camera,
-    passes: simScene && simCamera ? [{ scene: simScene, camera: simCamera }] : [],
+    passes: [{ scene: simScene, camera: simCamera }],
     horizonUv: () => canvasY((framing.horizonNdc + 1) * 0.5, canvasH, bleedPx),
     resize,
     update,
