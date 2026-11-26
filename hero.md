@@ -312,9 +312,10 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * Its colour switches when the theme sweep reaches the top of the sky: 60% of the way into dawn, 12% into dusk. Changing its height for two frames makes Safari re-sample the colour.
 
 **Grass blade edges:**
-* GPUs dither fractional alpha-to-coverage across neighbouring pixels. At phone pixel densities that read as a speckled light fringe around every blade.
-* Phones, tablets and Apple GPUs use `clean` edges: a one-pixel feather snapped to whole MSAA samples, with no lens feather. Desktop keeps `soft`.
-* `?blades=soft|crisp|clean` overrides the choice for QA. `crisp` (geometry-only outlines) makes the foreground noticeably darker.
+* Alpha-to-coverage also stores each feathered edge's alpha in the canvas. Chrome and iOS Safari composited the opaque (`alpha: false`) canvas with it anyway, so the near-white page background showed through every blade edge as a light, speckled outline (a fifth of the meadow's pixels on desktop).
+* Flora draws now mask alpha writes (`keepCanvasOpaque`) and keep their coverage. A distance-weighted lift in the grass shader keeps the meadow at the brightness it was approved at, which the leak used to supply. The phone frame matches its earlier tone within 1–5% per band; desktop, which leaked far more, reads a deeper green.
+* Every device uses `clean` edges: a one-pixel feather snapped to whole MSAA samples, so there is no in-between coverage for the GPU to dither.
+* `?blades=soft|crisp` switches to the other treatments for QA.
 
 **On-device QA:** `/?herodebug` shows tier, gamut, MSAA, blade mode, renderer, DPR and fps, plus viewport and safe-area metrics and the bleed.
 

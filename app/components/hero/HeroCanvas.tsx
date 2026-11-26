@@ -9,8 +9,6 @@ import {
   detectEnvironment,
   probeRenderer,
   resolveTier,
-  BLADE_EDGE_MODES,
-  pickBladeEdges,
   type HeroEnvironment,
   type HeroQuality,
   type HeroTier,
@@ -650,15 +648,14 @@ export default function HeroCanvas() {
               if ('drawingBufferColorSpace' in ctx) ctx.drawingBufferColorSpace = 'display-p3';
               if (ctx.drawingBufferColorSpace !== 'display-p3') p3Vivid = -1;
             }
-            const bladeEdges = pickBladeEdges(env, probe);
-            const built = buildQuality({ ...env, p3Vivid }, resolved, bladeEdges);
+            const built = buildQuality({ ...env, p3Vivid }, resolved);
             if (debug) {
               Object.assign(debug.lines, {
                 tier: `${resolved}${built.compact ? ' compact' : ''}${env.constrained ? ' constrained' : ''}`,
                 gamut: p3Vivid >= 0 ? `display-p3 (vivid ${p3Vivid})` : 'srgb',
                 msaa: `${ctx.getParameter(ctx.SAMPLES)}x default, targets ${built.msaa ? '4x' : 'off'}`,
                 waterSim: built.water.simRes || 'analytic',
-                blades: BLADE_EDGE_MODES[bladeEdges],
+                blades: env.bladeEdges,
                 cores: navigator.hardwareConcurrency || '?',
                 renderer: probe.rendererName || '?',
               });

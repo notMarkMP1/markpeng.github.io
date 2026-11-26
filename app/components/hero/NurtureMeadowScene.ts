@@ -658,9 +658,8 @@ const grassFragmentShader = /* glsl */ `
     // Blade edges (BLADE_EDGES, see capabilities.ts):
     //  0 soft  — alpha-to-coverage feather; foreground wisps feather like a shallow lens
     //  1 crisp — the geometry's own MSAA outline only
-    //  2 clean — a one-pixel feather snapped to whole MSAA samples. GPUs dither any
-    //            in-between coverage across neighbouring pixels, which phones show as
-    //            a speckled fringe on every blade; whole samples leave nothing to dither.
+    //  2 clean — (default) a one-pixel feather snapped to whole MSAA samples, so the
+    //            GPU has no in-between coverage to dither across neighbouring pixels
   #if BLADE_EDGES == 1
     float alpha = 1.0;
   #else
@@ -720,6 +719,10 @@ const grassFragmentShader = /* glsl */ `
     // Foreground depth softness: slightly lifted, warmer, defocused
     col = mix(col, col * 1.06 + vec3(0.025, 0.028, 0.008), nearLens * 0.55);
 
+    // Sunlit lift, deepening into the mid-field: holds the meadow at the brightness it
+    // was art-directed at, which a light outline leaking through every blade edge
+    // used to supply (see keepCanvasOpaque)
+    col *= mix(1.06, 1.26, smoothstep(3.0, 12.0, vFx.w));
     col = applyMeadowHaze(col, vFx.w);
     gl_FragColor = vec4(outputGamut(col), alpha);
   }
@@ -1588,6 +1591,23 @@ export function createNurtureMeadowScene(
   scene.add(ground);
 
   // --- Flora: grass, seed plumes, wildflowers (frustum-fit, replanted on big aspect changes)
+  /*
+   * Alpha-to-coverage turns a flora fragment's alpha into its MSAA sample mask, but
+   * the GPU also stores that alpha in the covered samples. The canvas is created
+   * opaque (`alpha: false`), yet Chrome still composites it with the stored alpha,
+   * so every feathered blade edge let the page backdrop through as a light outline
+   * (a fifth of the meadow's pixels on desktop). Flora draws keep their coverage
+   * but never write alpha, which stays at the opaque clear value.
+   */
+  const keepCanvasOpaque = (mesh: THREE.Mesh) => {
+    mesh.onBeforeRender = (renderer) => {
+      renderer.state.buffers.color.setMask(true); // three's cached mask matches what we restore
+      renderer.getContext().colorMask(true, true, true, false);
+    };
+    mesh.onAfterRender = (renderer) => {
+      renderer.getContext().colorMask(true, true, true, true);
+    };
+  };
   const makeFloraMaterial = (vertexShader: string, fragmentShader: string) =>
     new THREE.ShaderMaterial({
       vertexShader,
@@ -1609,6 +1629,7 @@ export function createNurtureMeadowScene(
   [grass, plumes, flowers].forEach((mesh, i) => {
     mesh.frustumCulled = false;
     mesh.renderOrder = i;
+    keepCanvasOpaque(mesh);
     scene.add(mesh);
   });
 
