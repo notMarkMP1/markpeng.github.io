@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { HERO_TRANSITION_MS } from './types';
 
 /*
@@ -33,9 +33,6 @@ export function readHeroBleed() {
 const MAX_BLEED = 200;
 /** When each hero theme sweep crosses the top edge of the sky, as a share of the transition. */
 const TINT_DELAY = { light: 0.6, dark: 0.12 } as const;
-/** When the rising / retreating route veil crosses the top edge of the screen. */
-const ROUTE_TO_PAGE_TINT_DELAY_MS = 260;
-const ROUTE_TO_HOME_TINT_DELAY_MS = 120;
 
 type SafariTint = 'hero-light' | 'hero-dark' | 'page-light' | 'page-dark';
 
@@ -44,8 +41,6 @@ function isAppleMobile() {
 }
 
 export function useSafariChrome(isHome: boolean) {
-  const prevIsHomeRef = useRef<boolean | null>(null);
-
   // ---- Status-bar tint across all routes & theme toggles --------------------
   useEffect(() => {
     if (!isAppleMobile()) return;
@@ -80,18 +75,9 @@ export function useSafariChrome(isHome: boolean) {
       resample();
     };
 
-    const prevIsHome = prevIsHomeRef.current;
-    prevIsHomeRef.current = isHome;
-
-    // Initial mount sets tint immediately; route changes time it to when the
-    // feathered veil crosses the top edge so the status bar matches what's below it.
-    const nextRouteTint = desiredTint();
-    if (prevIsHome === null || prevIsHome === isHome || reducedMotion.matches) {
-      setTint(nextRouteTint);
-    } else {
-      const delay = isHome ? ROUTE_TO_HOME_TINT_DELAY_MS : ROUTE_TO_PAGE_TINT_DELAY_MS;
-      tintTimer = window.setTimeout(() => setTint(desiredTint()), delay);
-    }
+    // Update status-bar tint immediately on mount and on route changes so Safari's
+    // native status-bar crossfade runs in sync with our route transition instead of lagging behind.
+    setTint(desiredTint());
 
     const observer = new MutationObserver(() => {
       const next = desiredTint();

@@ -14,11 +14,12 @@ import { useSafariChrome } from '@/app/components/hero/safariChrome';
 const HeroCanvas = dynamic(() => import('@/app/components/hero/HeroCanvas'), { ssr: false });
 
 /** Duration of the feathered canvas veil gliding between `/` and secondary routes. */
-const VEIL_DURATION_MS = 480;
+const VEIL_DURATION_MS = 460;
 /** Duration of HeroOverlay gently drifting out when leaving `/`. */
 const OVERLAY_EXIT_MS = 240;
 
 type RouteTransitionKind = 'initial' | 'home-to-page' | 'page-to-home' | 'page-to-page';
+type VeilPhase = 'idle' | 'to-page' | 'to-home';
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -42,6 +43,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const [overlayMounted, setOverlayMounted] = useState(isHome);
   const [overlayVisible, setOverlayVisible] = useState(isHome);
   const [fromHomePath, setFromHomePath] = useState<string | null>(null);
+  const [veilPhase, setVeilPhase] = useState<VeilPhase>('idle');
 
   useEffect(() => {
     const prevIsHome = prevIsHomeRef.current;
@@ -55,14 +57,20 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       setFromHomePath(null);
       setOverlayMounted(true);
 
-      // Returning from a secondary route: give the retreating veil a brief beat
-      // to uncover the sky before the hero headline blooms back in.
+      // Returning from a secondary route: glide the veil down and unmount it once
+      // finished so no overlay ever lingers over the hero or iOS Safari's toolbar.
       if (prevIsHome === false && !reducedMotion) {
+        setVeilPhase('to-home');
         setOverlayVisible(false);
         const enterTimer = window.setTimeout(() => setOverlayVisible(true), 120);
-        return () => window.clearTimeout(enterTimer);
+        const clearVeilTimer = window.setTimeout(() => setVeilPhase('idle'), VEIL_DURATION_MS + 40);
+        return () => {
+          window.clearTimeout(enterTimer);
+          window.clearTimeout(clearVeilTimer);
+        };
       }
 
+      setVeilPhase('idle');
       setOverlayVisible(true);
       return;
     }
@@ -72,27 +80,37 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     setFromHomePath(justLeftHome && !reducedMotion ? pathname : null);
 
     if (!justLeftHome || reducedMotion) {
+      setVeilPhase('idle');
       setOverlayVisible(false);
       setOverlayMounted(false);
       setHeroPaused(true);
       return;
     }
 
-    // Leaving `/`: smoothly fade/lift HeroOverlay out instead of snapping it away,
-    // and pause WebGL once the rising canvas veil fully covers the viewport.
+    // Leaving `/`: fade/lift HeroOverlay out, sweep the canvas veil up, pause WebGL
+    // once covered, then unmount the veil so `body` owns the background natively
+    // (letting content flow cleanly behind iOS 26 Safari's floating bottom toolbar).
+    setVeilPhase('to-page');
     setOverlayVisible(false);
     const unmountOverlayTimer = window.setTimeout(() => setOverlayMounted(false), OVERLAY_EXIT_MS + 30);
-    const pauseHeroTimer = window.setTimeout(() => setHeroPaused(true), VEIL_DURATION_MS + 40);
+    const pauseHeroTimer = window.setTimeout(() => setHeroPaused(true), VEIL_DURATION_MS + 20);
+    const clearVeilTimer = window.setTimeout(() => setVeilPhase('idle'), VEIL_DURATION_MS + 70);
 
     return () => {
       window.clearTimeout(unmountOverlayTimer);
       window.clearTimeout(pauseHeroTimer);
+      window.clearTimeout(clearVeilTimer);
     };
   }, [isHome, pathname]);
 
   const delaySecondaryEntry = transitionKind === 'home-to-page' || fromHomePath === pathname;
-
   const showOverlay = isHome || overlayMounted;
+  const activeVeil: VeilPhase =
+    transitionKind === 'home-to-page'
+      ? 'to-page'
+      : transitionKind === 'page-to-home'
+        ? 'to-home'
+        : veilPhase;
 
   return (
     <>
@@ -107,16 +125,18 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </>
       )}
 
-      {/* Feathered canvas veil: pure GPU transform + opacity. Rises smoothly from
-          the horizon when leaving `/` (no murky double-exposure over sky/grass) and
-          glides back down on return to reveal the live hero immediately. */}
-      <div
-        aria-hidden="true"
-        data-active={isHome ? 'false' : 'true'}
-        className="route-veil pointer-events-none fixed inset-0 z-[1] overflow-hidden"
-      >
-        <div className="route-veil-sheet" />
-      </div>
+      {/* Transient feathered canvas veil: mounted ONLY during `/` <-> secondary
+          route transitions, then unmounted so secondary pages have zero fixed
+          overlays blocking iOS 26 Safari's translucent floating URL bar. */}
+      {activeVeil !== 'idle' && (
+        <div
+          aria-hidden="true"
+          data-phase={activeVeil}
+          className="route-veil pointer-events-none fixed inset-0 z-[1] overflow-hidden"
+        >
+          <div className="route-veil-sheet" />
+        </div>
+      )}
 
       <header className="relative z-20 w-full">
         <NavBar />

@@ -905,8 +905,19 @@ html[data-hero-tint-refresh] .hero-top-tint {
   }
 
   .hero-layer.hero-layer-inactive {
-    position: fixed;
+    position: absolute;
     height: 100lvh;
+  }
+
+  /* Keep the transient route veil out of `position: fixed` on touch devices so
+     iOS 26 Safari never paints or caches an opaque bottom-bar tint over the URL area. */
+  .route-veil {
+    position: absolute;
+    inset: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(100lvh + 160px);
   }
 
   .hero-top-tint {
@@ -918,21 +929,32 @@ html[data-hero-tint-refresh] .hero-top-tint {
    Site-Wide Cohesion — Choreographed Feathered Veil & Hero Overlay Handoff
    ========================================================================== */
 
-/* Container stays hidden at rest on `/` so it costs 0 paint over the hero. */
-.route-veil {
-  visibility: hidden;
-  transition: visibility 0s linear 480ms;
-}
-
-.route-veil[data-active="true"] {
-  visibility: visible;
-  transition: visibility 0s linear 0s;
-}
-
 /* 140% tall sheet: top 28.57% (= 40% viewport) is a smooth multi-stop feathered
    edge, bottom 71.43% (= 100% viewport) is 100% solid --veil-bg.
-   Pure GPU transform + opacity keeps the sweep fluid even while a route mounts,
-   and registering --veil-bg lets Light <-> Dark crossfade smoothly on secondary routes. */
+   Mounted ONLY during `/` <-> secondary transitions (unmounted at rest so
+   secondary routes have zero fixed overlays over iOS 26 Safari's URL toolbar). */
+@keyframes route-veil-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 72%, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, -28.572%, 0);
+  }
+}
+
+@keyframes route-veil-down {
+  from {
+    opacity: 1;
+    transform: translate3d(0, -28.572%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 72%, 0);
+  }
+}
+
 .route-veil-sheet {
   --veil-bg: #fafcf9;
   position: absolute;
@@ -949,22 +971,19 @@ html[data-hero-tint-refresh] .hero-top-tint {
     var(--veil-bg) 28.57%,
     var(--veil-bg) 100%
   );
-  opacity: 0;
-  transform: translate3d(0, 72%, 0);
   will-change: transform, opacity;
-  transition:
-    --veil-bg 440ms var(--hero-ease),
-    transform 480ms var(--hero-ease),
-    opacity 320ms ease-out;
 }
 
 html[data-theme="dark"] .route-veil-sheet {
   --veil-bg: #07080b;
 }
 
-.route-veil[data-active="true"] .route-veil-sheet {
-  opacity: 1;
-  transform: translate3d(0, -28.572%, 0);
+.route-veil[data-phase="to-page"] .route-veil-sheet {
+  animation: route-veil-up 460ms var(--hero-ease) forwards;
+}
+
+.route-veil[data-phase="to-home"] .route-veil-sheet {
+  animation: route-veil-down 460ms var(--hero-ease) forwards;
 }
 
 /* Smooth HeroOverlay exit on leave and bloom-in on return to `/` */
@@ -1030,13 +1049,12 @@ html[data-hero-fallback="true"] .hero-layer {
   .hero-overlay,
   .hero-overlay-stage,
   .hero-overlay-stage[data-visible="true"],
-  .hero-backdrop,
-  .route-veil,
-  .route-veil[data-active="true"],
-  .route-veil-sheet {
+  .hero-backdrop {
     transition: none;
   }
 
+  .route-veil[data-phase="to-page"] .route-veil-sheet,
+  .route-veil[data-phase="to-home"] .route-veil-sheet,
   .route-content-from-home,
   .route-footer-from-home {
     animation: none;
