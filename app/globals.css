@@ -8,8 +8,8 @@
 }
 
 /* ==========================================================================
-   Project Nurture — Phase 1 Semantic Theme Tokens
-   Light: Sunlit White (#FAFCF9) | Dark: Stark Black (#090909)
+   Project Nurture — Semantic Theme Tokens
+   Light: Sunlit White (#FAFCF9) | Dark: Get Your Wish Obsidian (#07080B)
    ========================================================================== */
 
 /* Light Mode: Sunlit White (#FAFCF9) */
@@ -23,6 +23,11 @@
   --color-primary-muted: #165c38;
   --color-primary-subtle: #e7f3eb;
   --color-primary-soft: #2e8b57;
+
+  --color-accent-rail: linear-gradient(180deg, #3a9660 0%, #1f7a4c 100%);
+  --color-ink-start: #2e8b57;
+  --color-ink-mid: #1f7a4c;
+  --color-ink-end: #165c38;
 
   --color-accent-sky: #2f5fa8;
   --color-accent-sky-subtle: #edf3fb;
@@ -67,57 +72,63 @@
   --hljs-deletion: #991b1b;
 }
 
-/* Dark Mode: Stark Black (#090909) */
+/* Dark Mode: Get Your Wish Night (#07080B obsidian + sky-screen blue) */
 html[data-theme="dark"] {
-  --color-background: #090909;
-  --color-surface: #131313;
-  --color-surface-elevated: #1f1f1f;
-  --color-surface-code: #131313;
+  --color-background: #07080b;
+  --color-surface: #0e121a;
+  --color-surface-elevated: #171e2c;
+  --color-surface-code: #0d1119;
 
-  --color-primary: #72e3a6;
-  --color-primary-muted: #4cd48c;
-  --color-primary-subtle: rgba(114, 227, 166, 0.1);
-  --color-primary-soft: #a7f3d0;
+  --color-primary: #88b8ff;
+  --color-primary-muted: #629df5;
+  --color-primary-subtle: rgba(116, 174, 255, 0.11);
+  --color-primary-soft: #b8dcff;
 
-  --color-accent-sky: #89b0ff;
-  --color-accent-sky-subtle: rgba(137, 176, 255, 0.09);
+  /* Gradient drawn straight from NightWaterStage: cyan-ice core -> sky blue -> cobalt */
+  --color-accent-rail: linear-gradient(180deg, #94e0ff 0%, #6ba8ff 52%, #3a74d9 100%);
+  --color-ink-start: #94e0ff;
+  --color-ink-mid: #74b2ff;
+  --color-ink-end: #4282eb;
+
+  --color-accent-sky: #7be0f5;
+  --color-accent-sky-subtle: rgba(123, 224, 245, 0.09);
 
   --color-warning: #ebb76c;
   --color-warning-subtle: rgba(235, 183, 108, 0.1);
 
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #c9c9ce;
-  --color-text-muted: #8a8a93;
-  --color-text-subtle: #696972;
+  --color-text-primary: #f4f7fc;
+  --color-text-secondary: #bcc5d4;
+  --color-text-muted: #838fa3;
+  --color-text-subtle: #626e82;
 
-  --color-border: #272727;
-  --color-border-muted: #3b3b3b;
-  --color-print-mat: #161616;
+  --color-border: #1e2636;
+  --color-border-muted: #2e3a50;
+  --color-print-mat: #0f141e;
 
-  --color-scribble: #ffffff;
-  --scribble-opacity: 0.19;
+  --color-scribble: #d8e8ff;
+  --scribble-opacity: 0.17;
 
   --color-hover: var(--color-surface-elevated);
   --color-active: var(--color-primary-subtle);
-  --color-focus-ring: rgba(114, 227, 166, 0.5);
+  --color-focus-ring: rgba(136, 184, 255, 0.52);
 
-  --color-scrollbar: rgba(114, 227, 166, 0.3);
-  --color-scrollbar-hover: rgba(114, 227, 166, 0.5);
+  --color-scrollbar: rgba(136, 184, 255, 0.28);
+  --color-scrollbar-hover: rgba(136, 184, 255, 0.48);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 10px -1px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 10px 22px -3px rgba(0, 0, 0, 0.55);
-  --shadow-photo: 0 4px 14px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.035);
+  --shadow-photo: 0 4px 16px -4px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(180, 210, 255, 0.06);
 
-  --hljs-fg: #e2e2e6;
-  --hljs-comment: #7e7e87;
+  --hljs-fg: #e2e8f2;
+  --hljs-comment: #6e7b91;
   --hljs-keyword: #90b6ff;
   --hljs-string: #7ae8ad;
   --hljs-number: #f2bc85;
   --hljs-title: #b2ccff;
-  --hljs-attr: #7adbb8;
+  --hljs-attr: #7fdcf0;
   --hljs-variable: #dca9eb;
-  --hljs-meta: #9a9aa3;
+  --hljs-meta: #8a96ab;
   --hljs-addition: #72e3a6;
   --hljs-deletion: #f87171;
 }
@@ -178,7 +189,9 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
   overflow-x: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.44s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.44s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -591,40 +604,45 @@ body {
 @property --hero-title-shadow-a { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-title-shadow-b { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-title-shadow-y { syntax: '<length>'; inherits: true; initial-value: 3px; }
-@property --home-nav-text { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
-@property --home-nav-muted { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
-@property --home-nav-pill { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --home-nav-border { syntax: '<color>'; inherits: true; initial-value: transparent; }
-@property --home-nav-focus { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --veil-bg { syntax: '<color>'; inherits: true; initial-value: #fafcf9; }
 
-/* NavBar on the home route only: original borderless floating bar, sky-legible ink */
-html:not([data-hero-fallback="true"]) .home-nav {
-  --home-nav-text: #ffffff;
-  --home-nav-muted: rgba(255, 255, 255, 0.8);
-  --home-nav-pill: rgba(255, 255, 255, 0.22);
-  --home-nav-border: rgba(255, 255, 255, 0.34);
-  --home-nav-focus: rgba(255, 255, 255, 0.65);
-
-  --color-text-primary: var(--home-nav-text);
-  --color-text-muted: var(--home-nav-muted);
-  --color-surface-elevated: var(--home-nav-pill);
-  --color-border: var(--home-nav-border);
-  --color-focus-ring: var(--home-nav-focus);
-
-  transition:
-    --home-nav-text var(--hero-duration) var(--hero-ease),
-    --home-nav-muted var(--hero-duration) var(--hero-ease),
-    --home-nav-pill var(--hero-duration) var(--hero-ease),
-    --home-nav-border var(--hero-duration) var(--hero-ease),
-    --home-nav-focus var(--hero-duration) var(--hero-ease);
+/* NavBar tokens across all routes.
+   IMPORTANT: Do NOT transition custom properties on `.site-nav` itself while
+   child links/buttons also run `transition-colors` — updating an inherited
+   `@property` every frame resets the children's CSS color transitions from t=0
+   each frame, freezing them and causing a late flash/snap. Each nav child owns
+   its own single colour transition directly. */
+.site-nav {
+  --color-text-primary: #161b17;
+  --color-text-muted: #627066;
+  --color-surface-elevated: #e7efe6;
+  --color-border: #dce5dc;
+  --color-focus-ring: rgba(31, 122, 76, 0.45);
 }
 
-html[data-theme="dark"]:not([data-hero-fallback="true"]) .home-nav {
-  --home-nav-text: #f4f8ff;
-  --home-nav-muted: rgba(205, 218, 240, 0.68);
-  --home-nav-pill: rgba(180, 210, 255, 0.11);
-  --home-nav-border: rgba(190, 215, 255, 0.18);
-  --home-nav-focus: rgba(137, 176, 255, 0.55);
+html[data-theme="dark"] .site-nav {
+  --color-text-primary: #f4f7fc;
+  --color-text-muted: #838fa3;
+  --color-surface-elevated: #171e2c;
+  --color-border: #1e2636;
+  --color-focus-ring: rgba(136, 184, 255, 0.52);
+}
+
+/* Home route override: sky-legible ink over the live WebGL hero */
+html:not([data-hero-fallback="true"]) .site-nav.home-nav {
+  --color-text-primary: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.8);
+  --color-surface-elevated: rgba(255, 255, 255, 0.22);
+  --color-border: rgba(255, 255, 255, 0.34);
+  --color-focus-ring: rgba(255, 255, 255, 0.65);
+}
+
+html[data-theme="dark"]:not([data-hero-fallback="true"]) .site-nav.home-nav {
+  --color-text-primary: #f4f8ff;
+  --color-text-muted: rgba(205, 218, 240, 0.68);
+  --color-surface-elevated: rgba(180, 210, 255, 0.11);
+  --color-border: rgba(190, 215, 255, 0.18);
+  --color-focus-ring: rgba(137, 176, 255, 0.55);
 }
 
 /* Hero foreground */
@@ -859,9 +877,104 @@ html[data-hero-tint-refresh] .hero-top-tint {
     position: absolute;
   }
 
+  .hero-layer.hero-layer-inactive {
+    position: fixed;
+    height: 100lvh;
+  }
+
   .hero-top-tint {
     display: block;
   }
+}
+
+/* ==========================================================================
+   Site-Wide Cohesion — Choreographed Feathered Veil & Hero Overlay Handoff
+   ========================================================================== */
+
+/* Container stays hidden at rest on `/` so it costs 0 paint over the hero. */
+.route-veil {
+  visibility: hidden;
+  transition: visibility 0s linear 480ms;
+}
+
+.route-veil[data-active="true"] {
+  visibility: visible;
+  transition: visibility 0s linear 0s;
+}
+
+/* 140% tall sheet: top 28.57% (= 40% viewport) is a smooth multi-stop feathered
+   edge, bottom 71.43% (= 100% viewport) is 100% solid --veil-bg.
+   Pure GPU transform + opacity keeps the sweep fluid even while a route mounts,
+   and registering --veil-bg lets Light <-> Dark crossfade smoothly on secondary routes. */
+.route-veil-sheet {
+  --veil-bg: #fafcf9;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 140%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--veil-bg) 18%, transparent) 8%,
+    color-mix(in srgb, var(--veil-bg) 55%, transparent) 16%,
+    color-mix(in srgb, var(--veil-bg) 88%, transparent) 23%,
+    var(--veil-bg) 28.57%,
+    var(--veil-bg) 100%
+  );
+  opacity: 0;
+  transform: translate3d(0, 72%, 0);
+  will-change: transform, opacity;
+  transition:
+    --veil-bg 440ms var(--hero-ease),
+    transform 480ms var(--hero-ease),
+    opacity 320ms ease-out;
+}
+
+html[data-theme="dark"] .route-veil-sheet {
+  --veil-bg: #07080b;
+}
+
+.route-veil[data-active="true"] .route-veil-sheet {
+  opacity: 1;
+  transform: translate3d(0, -28.572%, 0);
+}
+
+/* Smooth HeroOverlay exit on leave and bloom-in on return to `/` */
+.hero-overlay-stage {
+  opacity: 0;
+  transform: translate3d(0, -10px, 0);
+  transition:
+    opacity 220ms var(--hero-ease),
+    transform 240ms var(--hero-ease);
+}
+
+.hero-overlay-stage[data-visible="true"] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 420ms var(--hero-ease),
+    transform 440ms var(--hero-ease);
+}
+
+/* Brief opacity-only handoff (never transform, so fixed ScrollDrawLine stays
+   viewport-anchored) when entering a secondary route from `/` so text arrives
+   onto clean solid canvas instead of double-exposing over the sky. */
+@keyframes route-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.route-content-from-home {
+  animation: route-reveal 360ms var(--hero-ease) 150ms backwards;
+}
+
+.route-footer-from-home {
+  animation: route-reveal 360ms var(--hero-ease) 220ms backwards;
 }
 
 /* Flat first-paint backdrop under the canvas while WebGL warms up. Each world's
@@ -887,9 +1000,19 @@ html[data-hero-fallback="true"] .hero-top-tint {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:not([data-hero-fallback="true"]) .home-nav,
+  .site-nav,
   .hero-overlay,
-  .hero-backdrop {
+  .hero-overlay-stage,
+  .hero-overlay-stage[data-visible="true"],
+  .hero-backdrop,
+  .route-veil,
+  .route-veil[data-active="true"],
+  .route-veil-sheet {
     transition: none;
+  }
+
+  .route-content-from-home,
+  .route-footer-from-home {
+    animation: none;
   }
 }

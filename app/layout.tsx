@@ -2,8 +2,7 @@ import type React from "react"
 import "./globals.css"
 import type { Metadata, Viewport } from "next"
 import { Shippori_Mincho, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
-import NavBar from "./components/NavBar"
-import Footer from "./components/Footer"
+import SiteShell from "./components/SiteShell"
 import { ThemeProvider } from "./components/ThemeProvider"
 
 const shipporiMincho = Shippori_Mincho({
@@ -90,17 +89,9 @@ export default function RootLayout({
         }}
         />
       </head>
-      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} font-body flex flex-col min-h-screen antialiased`}>
+      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} relative font-body flex flex-col min-h-screen antialiased`}>
         <ThemeProvider>
-          <header className="w-full">
-            <NavBar />
-          </header>
-          <main className="flex-grow flex flex-col">
-            <div className="flex-grow">
-              {children}
-            </div>
-          </main>
-          <Footer />
+          <SiteShell>{children}</SiteShell>
         </ThemeProvider>
       </body>
     </html>

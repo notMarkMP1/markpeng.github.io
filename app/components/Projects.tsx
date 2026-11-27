@@ -62,7 +62,14 @@ export default function Projects({ items }: ProjectProps) {
                     shapeRendering="geometricPrecision"
                     aria-hidden="true"
                   >
-                    <path d={inkStroke} fill="var(--color-primary)" />
+                    <defs>
+                      <linearGradient id={`project-ink-grad-${index}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="var(--color-ink-start)" />
+                        <stop offset="52%" stopColor="var(--color-ink-mid)" />
+                        <stop offset="100%" stopColor="var(--color-ink-end)" />
+                      </linearGradient>
+                    </defs>
+                    <path d={inkStroke} fill={`url(#project-ink-grad-${index})`} />
                   </svg>
                 </h3>
                 <svg

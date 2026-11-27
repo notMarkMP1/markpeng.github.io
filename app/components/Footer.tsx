@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
-export default function Footer() {
+export default function Footer({ delayEntrance = false }: { delayEntrance?: boolean }) {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
@@ -12,7 +12,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="relative z-10 w-full flex flex-col items-center mt-auto py-6">
+    <footer className={`relative z-10 w-full flex flex-col items-center mt-auto py-6${delayEntrance ? ' route-footer-from-home' : ''}`}>
       <div className="max-w-lg w-4/5 mx-auto h-px bg-[var(--color-border)] mb-5" />
       <div className="flex items-center gap-4">
         <motion.a

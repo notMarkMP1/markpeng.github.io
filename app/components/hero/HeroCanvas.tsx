@@ -113,16 +113,21 @@ interface CompositorProps {
   themeRef: React.RefObject<HeroTheme>;
   input: HeroInput;
   reducedMotion: boolean;
+  active: boolean;
+  paused: boolean;
   onFirstFrame: () => void;
 }
 
-function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame }: CompositorProps) {
+function HeroCompositor({ quality, themeRef, input, reducedMotion, active, paused, onFirstFrame }: CompositorProps) {
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
   const setDpr = useThree((s) => s.setDpr);
   const dpr = useThree((s) => s.viewport.dpr);
   const stateRef = useRef<CompositorState | null>(null);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  const wasActiveRef = useRef(active);
   // Frame-time governor state (see the end of useFrame)
   const governorRef = useRef({ settleUntil: 0, window: 0, slow: 0 });
   // Idle pacing: recent rAF intervals (min ≈ display refresh), skipped-frame carry
@@ -255,9 +260,33 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
     invalidate();
   }, [size.width, size.height, dpr, invalidate]);
 
+  // When returning to `/` after being away, snap silently to the current theme
+  // (in case Light/Dark was toggled on another route) and paint an immediate frame.
+  useEffect(() => {
+    const wasActive = wasActiveRef.current;
+    wasActiveRef.current = active;
+    const state = stateRef.current;
+    if (!state || !active || wasActive) return;
+
+    const currentTheme = readTheme();
+    themeRef.current = currentTheme;
+    if (state.current !== currentTheme && state.ready[currentTheme]) {
+      state.current = currentTheme;
+      state.from = currentTheme;
+      state.to = currentTheme;
+      state.direction = 0;
+      state.linear = 0;
+    }
+    invalidate();
+  }, [active, themeRef, invalidate]);
+
+  useEffect(() => {
+    if (!paused) invalidate();
+  }, [paused, invalidate]);
+
   useFrame((_, delta) => {
     const state = stateRef.current;
-    if (!state) return;
+    if (!state || pausedRef.current) return;
     const motion = !reducedMotion;
     const now = performance.now();
     const target = themeRef.current ?? state.current;
@@ -454,7 +483,12 @@ class CanvasErrorBoundary extends Component<{ onError: () => void; children: Rea
   }
 }
 
-export default function HeroCanvas() {
+interface HeroCanvasProps {
+  active?: boolean;
+  paused?: boolean;
+}
+
+export default function HeroCanvas({ active = true, paused = false }: HeroCanvasProps) {
   const [env, setEnv] = useState<HeroEnvironment | null>(null);
   // The scene can't run here (no hardware WebGL2) or lost its context: switch to
   // the centered pre-Nurture fallback layout (html[data-hero-fallback="true"])
@@ -485,8 +519,21 @@ export default function HeroCanvas() {
       setEnv((prev) => (prev ? { ...prev, reducedMotion: motionQuery.matches } : prev));
     motionQuery.addEventListener('change', onMotionChange);
 
-    // ---- Passive pointer / touch tracking (never preventDefault) -------------
+    return () => {
+      observer.disconnect();
+      motionQuery.removeEventListener('change', onMotionChange);
+    };
+  }, []);
+
+  // ---- Passive pointer / touch tracking (active on `/` only; never preventDefault) ----
+  useEffect(() => {
     const input = inputRef.current;
+    if (!active) {
+      input.active = false;
+      input.taps.length = 0;
+      return;
+    }
+
     // Relative to the canvas layer itself: on phones it is taller than the visible
     // viewport (it runs on under the browser toolbar)
     const setNdc = (cx: number, cy: number) => {
@@ -553,8 +600,8 @@ export default function HeroCanvas() {
     window.addEventListener('touchcancel', onTouchEnd, { passive: true });
 
     return () => {
-      observer.disconnect();
-      motionQuery.removeEventListener('change', onMotionChange);
+      input.active = false;
+      input.taps.length = 0;
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('mouseout', onMouseOut);
@@ -564,7 +611,7 @@ export default function HeroCanvas() {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, []);
+  }, [active]);
 
   // Once the opaque canvas has fully faded in, skip painting the initial-paint
   // backdrop underneath it; if the canvas fails or loses its context, switch to
@@ -604,9 +651,10 @@ export default function HeroCanvas() {
     <div
       ref={layerRef}
       aria-hidden="true"
-      className="hero-layer pointer-events-none z-0 overflow-hidden"
+      className={`hero-layer pointer-events-none z-0 overflow-hidden${active ? '' : ' hero-layer-inactive'}`}
       style={{
         opacity: visible ? 1 : 0,
+        visibility: paused ? 'hidden' : 'visible',
         transition: reducedMotion ? 'none' : `opacity ${CANVAS_FADE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
       }}
     >
@@ -615,7 +663,7 @@ export default function HeroCanvas() {
           flat
           linear
           dpr={compact ? [1, compactMaxDpr(env)] : [1, 1.75]}
-          frameloop={reducedMotion ? 'demand' : 'always'}
+          frameloop={paused ? 'never' : reducedMotion ? 'demand' : 'always'}
           gl={{
             antialias: true,
             alpha: false,
@@ -657,6 +705,8 @@ export default function HeroCanvas() {
               themeRef={themeRef}
               input={inputRef.current}
               reducedMotion={reducedMotion}
+              active={active}
+              paused={paused}
               onFirstFrame={() => setVisible(true)}
             />
           )}

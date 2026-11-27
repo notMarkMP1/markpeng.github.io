@@ -1,27 +1,29 @@
-'use client'
-import React, { useRef } from 'react';
-import { motion } from 'framer-motion';
+'use client';
+
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface FadeInSectionProps {
-    children: React.ReactNode;
-    delay?: number;
+  children: React.ReactNode;
+  delay?: number;
 }
 
-export default function FadeInSection({ children, delay }: FadeInSectionProps) {
-    const divRef = useRef<HTMLDivElement>(null);
-    
-    return (
-        <motion.div
-            ref={divRef}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay, ease: "easeInOut" }}
-            style={{ pointerEvents: "none" }}
-            onAnimationComplete={() => {
-                if (divRef.current) divRef.current.style.pointerEvents = "auto";
-            }}
-        >
-            {children}
-        </motion.div>
-    );
-};
+const SITE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+export default function FadeInSection({ children, delay = 0 }: FadeInSectionProps) {
+  const reducedMotion = useReducedMotion();
+
+  if (reducedMotion) {
+    return <div>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.46, delay, ease: SITE_EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}

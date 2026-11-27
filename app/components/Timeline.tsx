@@ -25,7 +25,7 @@ export default function Timeline({items}: TimelineProps) {
                     transition={{ type: "spring", stiffness: 300, damping: 22 }}
                     onClick={() => window.open(item.link, "_blank")}
                 >
-                    <div className="absolute left-0 top-0 h-full w-0.5" style={{ backgroundColor: 'var(--color-primary)' }} aria-hidden="true"></div>
+                    <div className="absolute left-0 top-0 h-full w-0.5 rounded-full" style={{ backgroundImage: 'var(--color-accent-rail)' }} aria-hidden="true"></div>
                     <div className="ml-5">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-0.5 sm:gap-2">
                             <h3 className="text-[15.5px] font-semibold font-body leading-snug text-[var(--color-text-primary)]">{item.company}</h3>

@@ -10,13 +10,13 @@ export default function Contact() {
       <FadeInSection>
         <h1 className="text-[2.2rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">Contact</h1>
       </FadeInSection>
-      <FadeInSection delay={0.2}>
+      <FadeInSection delay={0.07}>
         <p className="text-[15.5px] leading-relaxed text-[var(--color-text-secondary)] mt-1.5">markminpeng [at] gmail [dot] com</p>
       </FadeInSection>
-      <FadeInSection delay={0.4}>
+      <FadeInSection delay={0.14}>
         <h2 className="section-heading text-[1.35rem] mt-8 mb-2 font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Website Credits</h2>
       </FadeInSection>
-      <FadeInSection delay={0.6}>
+      <FadeInSection delay={0.2}>
         <p className="text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
           can be found on the{" "}
           <a

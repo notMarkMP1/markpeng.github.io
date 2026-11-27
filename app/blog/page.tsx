@@ -18,12 +18,12 @@ export default function BlogHome() {
             <FadeInSection>
                 <h1 className="text-[2.2rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">Blog</h1>
             </FadeInSection>
-            <FadeInSection delay={0.2}>
+            <FadeInSection delay={0.07}>
                 <p className="mt-1.5 mb-7 text-[15.5px] leading-relaxed text-[var(--color-text-secondary)]">maybe ill use this more eventually (currently unused)</p>
             </FadeInSection>
             <ul className="space-y-4">
                 {posts.map((post, index) => (
-                    <FadeInSection delay={0.1 * (index + 1) + 0.2} key={post.metadata.slug}>
+                    <FadeInSection delay={0.13 + index * 0.05} key={post.metadata.slug}>
                         <li className="border-b border-[var(--color-border)] pb-4 transition-colors duration-200 hover:border-[var(--color-border-muted)]">
                             <Link href={`/blog/${post.metadata.slug}`} className="group block">
                                 <h2 className="text-[17.5px] font-semibold font-body leading-snug text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors duration-200">

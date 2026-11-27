@@ -91,7 +91,7 @@ function PhotoLightbox({
       className="fixed inset-0 z-[100] flex items-center justify-center p-5 sm:p-10 cursor-zoom-out backdrop-blur-[3px]"
       style={{
         backgroundColor: isDark
-          ? 'rgba(9, 9, 9, 0.62)'
+          ? 'rgba(7, 8, 11, 0.66)'
           : 'rgba(250, 252, 249, 0.56)',
       }}
     >

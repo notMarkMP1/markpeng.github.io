@@ -91,20 +91,20 @@ export default function AboutSection() {
           <FadeInSection>
             <h1 className="text-[2.2rem] font-medium tracking-[0.01em] leading-[1.22] font-heading text-[var(--color-text-primary)]">About</h1>
           </FadeInSection>
-          <FadeInSection delay={0.2}>
+          <FadeInSection delay={0.07}>
             <p className="mt-1.5 text-[15.5px] leading-relaxed text-[var(--color-text-secondary)]">a brief look about me</p>
             <PersonalPhotoStrip />
           </FadeInSection>
-          <FadeInSection delay={0.4}>
+          <FadeInSection delay={0.14}>
             <h2 className="section-heading mt-8 mb-4 text-[1.4rem] font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Timeline</h2>
           </FadeInSection>
-          <FadeInSection delay={0.6}>
+          <FadeInSection delay={0.2}>
             <Timeline items={timelineItems} />
           </FadeInSection>
-          <FadeInSection delay={0.8}>
+          <FadeInSection delay={0.26}>
             <h2 className="section-heading mt-8 mb-4 text-[1.4rem] font-medium tracking-[0.015em] font-heading text-[var(--color-text-primary)]">Projects</h2>
           </FadeInSection>
-          <FadeInSection delay={1.0}>
+          <FadeInSection delay={0.32}>
             <Projects items={projectItems} />
           </FadeInSection>
         </div>
