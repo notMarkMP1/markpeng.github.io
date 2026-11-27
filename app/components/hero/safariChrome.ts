@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { HERO_TRANSITION_MS } from './types';
 
 /*
@@ -19,8 +19,8 @@ import { HERO_TRANSITION_MS } from './types';
  * top edge, taller than 10px with a solid background colour. `.hero-top-tint`
  * stays mounted across every route (painting nothing itself via background-clip:
  * text) and follows `html[data-safari-tint]` across hero <-> secondary routes
- * and Light <-> Dark toggles, nudging its height for two frames so Safari 26
- * drops its cached edge colour and re-samples cleanly.
+ * and Light <-> Dark toggles, nudging its height so Safari 26 drops its cached
+ * edge colour and re-samples cleanly.
  */
 
 let bleedPx = 0;
@@ -31,72 +31,92 @@ export function readHeroBleed() {
 }
 
 const MAX_BLEED = 200;
-/** When each hero theme sweep crosses the top edge of the sky, as a share of the transition. */
-const TINT_DELAY = { light: 0.6, dark: 0.12 } as const;
+/** Lead-in before telling Safari 26 to re-sample on `/` theme sweeps (accounts for Safari's own ~200-250ms fade). */
+const TINT_DELAY = { light: 0.28, dark: 0.04 } as const;
 
 type SafariTint = 'hero-light' | 'hero-dark' | 'page-light' | 'page-dark';
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
 function isAppleMobile() {
+  if (typeof navigator === 'undefined') return false;
   return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+let activeTintTimer = 0;
+let activeRefreshFrame = 0;
+
+function resampleTopTint() {
+  const root = document.documentElement;
+  // Safari 26 doesn't always recompute a cached edge colour: changing the
+  // sampler's size for two frames makes it look again
+  cancelAnimationFrame(activeRefreshFrame);
+  root.dataset.heroTintRefresh = '';
+  activeRefreshFrame = requestAnimationFrame(() => {
+    activeRefreshFrame = requestAnimationFrame(() => {
+      delete root.dataset.heroTintRefresh;
+      activeRefreshFrame = 0;
+    });
+  });
+}
+
+function readCurrentTheme(): 'light' | 'dark' {
+  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+}
+
+function computeSafariTint(isHome: boolean): SafariTint {
+  const theme = readCurrentTheme();
+  const liveHero = isHome && document.documentElement.dataset.heroFallback !== 'true';
+  return liveHero ? (`hero-${theme}` as const) : (`page-${theme}` as const);
+}
+
+function applySafariTint(next: SafariTint) {
+  const root = document.documentElement;
+  if (root.dataset.safariTint === next) return;
+  root.dataset.safariTint = next;
+  resampleTopTint();
+}
+
+/**
+ * Called synchronously on NavBar link tap so iOS 26 Safari starts its native
+ * status-bar fade at t=0 rather than waiting for Next.js navigation + post-paint effects.
+ */
+export function hintSafariRouteTint(nextPath: string) {
+  if (!isAppleMobile()) return;
+  window.clearTimeout(activeTintTimer);
+  applySafariTint(computeSafariTint(nextPath === '/'));
 }
 
 export function useSafariChrome(isHome: boolean) {
   // ---- Status-bar tint across all routes & theme toggles --------------------
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isAppleMobile()) return;
     const root = document.documentElement;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-    let tintTimer = 0;
-    let refreshFrame = 0;
-    const resample = () => {
-      // Safari 26 doesn't always recompute a cached edge colour: changing the
-      // sampler's size for two frames makes it look again
-      cancelAnimationFrame(refreshFrame);
-      root.dataset.heroTintRefresh = '';
-      refreshFrame = requestAnimationFrame(() => {
-        refreshFrame = requestAnimationFrame(() => {
-          delete root.dataset.heroTintRefresh;
-          refreshFrame = 0;
-        });
-      });
-    };
-
-    const currentTheme = (): 'light' | 'dark' => (root.dataset.theme === 'light' ? 'light' : 'dark');
-    const desiredTint = (): SafariTint => {
-      const theme = currentTheme();
-      const liveHero = isHome && root.dataset.heroFallback !== 'true';
-      return liveHero ? (`hero-${theme}` as const) : (`page-${theme}` as const);
-    };
-
-    const setTint = (next: SafariTint) => {
-      if (root.dataset.safariTint === next) return;
-      root.dataset.safariTint = next;
-      resample();
-    };
-
-    // Update status-bar tint immediately on mount and on route changes so Safari's
-    // native status-bar crossfade runs in sync with our route transition instead of lagging behind.
-    setTint(desiredTint());
+    window.clearTimeout(activeTintTimer);
+    applySafariTint(computeSafariTint(isHome));
 
     const observer = new MutationObserver(() => {
-      const next = desiredTint();
-      window.clearTimeout(tintTimer);
+      const next = computeSafariTint(isHome);
+      window.clearTimeout(activeTintTimer);
       if (reducedMotion.matches || !isHome || root.dataset.heroFallback === 'true') {
-        setTint(next);
+        applySafariTint(next);
       } else {
-        tintTimer = window.setTimeout(() => setTint(desiredTint()), HERO_TRANSITION_MS * TINT_DELAY[currentTheme()]);
+        activeTintTimer = window.setTimeout(
+          () => applySafariTint(computeSafariTint(isHome)),
+          HERO_TRANSITION_MS * TINT_DELAY[readCurrentTheme()]
+        );
       }
     });
     observer.observe(root, { attributes: true, attributeFilter: ['data-theme', 'data-hero-fallback'] });
 
-    const onPageShow = () => resample();
+    const onPageShow = () => resampleTopTint();
     window.addEventListener('pageshow', onPageShow);
 
     return () => {
       observer.disconnect();
-      window.clearTimeout(tintTimer);
-      cancelAnimationFrame(refreshFrame);
+      window.clearTimeout(activeTintTimer);
       window.removeEventListener('pageshow', onPageShow);
     };
   }, [isHome]);

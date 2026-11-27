@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
+import { hintSafariRouteTint } from './hero/safariChrome';
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -35,6 +36,10 @@ export default function NavBar() {
             <Link
               key={item.path}
               href={item.path}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                if (item.path !== pathname) hintSafariRouteTint(item.path);
+              }}
               className={`px-3 py-2 text-[15px] font-medium tracking-[0.01em] rounded-xl transition-colors duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none relative font-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] ${
                 active
                   ? 'text-[var(--color-text-primary)]'
