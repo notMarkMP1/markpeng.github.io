@@ -1,12 +1,7 @@
 'use client';
 
-import { useRef, useEffect, useState, useMemo } from 'react';
-import {
-  generateOrganicPath,
-  createRandomSeed,
-  type ScribbleComposition,
-  type ScribbleStyle,
-} from '@/app/utils/generateOrganicPath';
+import { useRef, useEffect, useState } from 'react';
+import type { ScribbleComposition, ScribbleStyle } from '@/app/utils/generateOrganicPath';
 
 interface ScrollDrawLineProps {
   /** Optional deterministic seed. Omit to generate a fresh random scribble on every refresh. */
@@ -21,6 +16,11 @@ interface ScrollDrawLineProps {
 
 const HEIGHT_THRESHOLD_RATIO = 1.35;
 
+let pathModulePromise: Promise<typeof import('@/app/utils/generateOrganicPath')> | null = null;
+function loadPathModule() {
+  return (pathModulePromise ??= import('@/app/utils/generateOrganicPath'));
+}
+
 export default function ScrollDrawLine({
   seed,
   composition = 'auto',
@@ -32,31 +32,38 @@ export default function ScrollDrawLine({
   const rafId = useRef<number>(0);
   const catchUpStart = useRef(0);
   const prevTarget = useRef(0);
+  const [pathD, setPathD] = useState('');
   const [pathLength, setPathLength] = useState(0);
-  const [activeSeed, setActiveSeed] = useState<number | null>(seed ?? null);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [meetsHeightThreshold, setMeetsHeightThreshold] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Pick a fresh random seed on client mount when no fixed seed is supplied (hydration-safe)
+  // Only active at sm (>= 640px): phones never download generateOrganicPath or run rAF
   useEffect(() => {
-    if (seed !== undefined) {
-      setActiveSeed(seed);
-    } else {
-      setActiveSeed(createRandomSeed());
-    }
-  }, [seed]);
-
-  // Respect prefers-reduced-motion dynamically
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReducedMotion(mq.matches);
+    const mq = window.matchMedia('(min-width: 640px)');
+    const update = () => setIsDesktop(mq.matches);
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, []);
 
+  // Respect prefers-reduced-motion dynamically
+  useEffect(() => {
+    if (!isDesktop) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, [isDesktop]);
+
   // Automatically gate rendering to tall scrollable pages (scrollHeight > innerHeight * 1.35)
   useEffect(() => {
+    if (!isDesktop) {
+      setMeetsHeightThreshold(false);
+      return;
+    }
+
     const checkHeight = () => {
       const scrollable = document.documentElement.scrollHeight;
       const viewport = window.innerHeight;
@@ -76,26 +83,36 @@ export default function ScrollDrawLine({
       window.removeEventListener('resize', checkHeight);
       observer?.disconnect();
     };
-  }, []);
+  }, [isDesktop]);
 
-  // Generate path once per active seed
-  const pathD = useMemo(() => {
-    if (activeSeed === null) return '';
-    return generateOrganicPath({ seed: activeSeed, composition, style, density });
-  }, [activeSeed, composition, style, density]);
+  // Lazily load generateOrganicPath and build the scribble only on tall desktop pages
+  useEffect(() => {
+    if (!isDesktop || !meetsHeightThreshold) return;
+    let cancelled = false;
+
+    loadPathModule().then(({ generateOrganicPath, createRandomSeed }) => {
+      if (cancelled) return;
+      const activeSeed = seed !== undefined ? seed : createRandomSeed();
+      setPathD(generateOrganicPath({ seed: activeSeed, composition, style, density }));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isDesktop, meetsHeightThreshold, seed, composition, style, density]);
 
   // Measure path length after render
   useEffect(() => {
-    if (!meetsHeightThreshold || !pathD || !pathRef.current) return;
+    if (!isDesktop || !meetsHeightThreshold || !pathD || !pathRef.current) return;
     const len = pathRef.current.getTotalLength();
     setPathLength(len);
     pathRef.current.style.strokeDasharray = `${len}`;
     pathRef.current.style.strokeDashoffset = reducedMotion ? '0' : `${len}`;
-  }, [pathD, meetsHeightThreshold, reducedMotion]);
+  }, [pathD, isDesktop, meetsHeightThreshold, reducedMotion]);
 
   // Continuous rAF loop with slow-then-fast catch-up (disabled under prefers-reduced-motion)
   useEffect(() => {
-    if (!meetsHeightThreshold || pathLength === 0 || !pathRef.current) return;
+    if (!isDesktop || !meetsHeightThreshold || pathLength === 0 || !pathRef.current) return;
 
     const path = pathRef.current;
 
@@ -136,9 +153,9 @@ export default function ScrollDrawLine({
 
     rafId.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafId.current);
-  }, [pathLength, meetsHeightThreshold, reducedMotion]);
+  }, [pathLength, isDesktop, meetsHeightThreshold, reducedMotion]);
 
-  if (!meetsHeightThreshold) {
+  if (!isDesktop || !meetsHeightThreshold || !pathD) {
     return null;
   }
 

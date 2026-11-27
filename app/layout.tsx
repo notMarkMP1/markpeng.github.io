@@ -1,26 +1,60 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata, Viewport } from "next"
-import { Shippori_Mincho, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
+import localFont from "next/font/local"
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
 import SiteShell from "./components/SiteShell"
 import { ThemeProvider } from "./components/ThemeProvider"
 
-const shipporiMincho = Shippori_Mincho({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// Self-host Google Fonts' exact Latin slices of Shippori Mincho via next/font/local.
+// Using next/font/google triggers a Next.js subset-parsing bug on CJK fonts that
+// preloads 360 unused Japanese Kanji .woff2 slices (~10.8 MB) + 489 @font-face rules.
+const shipporiMincho = localFont({
+  src: "./fonts/shippori-mincho-latin-500.woff2",
+  weight: "500",
+  style: "normal",
+  display: "swap",
+  preload: true,
+  adjustFontFallback: "Times New Roman",
   variable: "--font-shippori",
+})
+
+// Weight 400 is only used for MDX blockquotes; load on demand without preloading globally.
+const shipporiMinchoRegular = localFont({
+  src: "./fonts/shippori-mincho-latin-400.woff2",
+  weight: "400",
+  style: "normal",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: "Times New Roman",
+  variable: "--font-shippori-regular",
 })
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  style: ["normal"],
+  display: "swap",
+  preload: true,
   variable: "--font-plex-sans",
 })
 
+// Italic is only used inside MDX blog prose; avoid preloading 49 KB on /, /about, /blog, /contact.
+const ibmPlexSansItalic = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["italic"],
+  display: "swap",
+  preload: false,
+  variable: "--font-plex-sans-italic",
+})
+
+// Monospace metadata/code is unused on / and /contact; let routes that render it fetch on demand.
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
+  display: "swap",
+  preload: false,
   variable: "--font-plex-mono",
 })
 
@@ -80,7 +114,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
         type="application/ld+json"
@@ -89,7 +122,7 @@ export default function RootLayout({
         }}
         />
       </head>
-      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} font-body flex flex-col min-h-screen antialiased`}>
+      <body className={`${shipporiMincho.variable} ${shipporiMinchoRegular.variable} ${ibmPlexSans.variable} ${ibmPlexSansItalic.variable} ${ibmPlexMono.variable} font-body flex flex-col min-h-screen antialiased`}>
         <ThemeProvider>
           <SiteShell>{children}</SiteShell>
         </ThemeProvider>

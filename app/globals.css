@@ -312,7 +312,7 @@ body {
 }
 
 .prose blockquote {
-  font-family: var(--font-shippori), ui-serif, Georgia, serif;
+  font-family: var(--font-shippori-regular), var(--font-shippori), ui-serif, Georgia, serif;
   font-style: normal;
   font-weight: 400;
   font-size: 1rem;
@@ -325,6 +325,12 @@ body {
   background-color: var(--color-surface);
   padding: 0.9rem 1.15rem;
   color: var(--color-text-primary);
+}
+
+.prose em,
+.prose i,
+.italic {
+  font-family: var(--font-plex-sans-italic), var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 .prose blockquote p {
@@ -549,6 +555,95 @@ body {
 /* Soft Lift — borderless image elevation without box/mat borders */
 .photo-soft-lift {
   box-shadow: var(--shadow-photo);
+}
+
+/* Theme-matched /about personal photography strip visibility.
+   Driven purely by html[data-theme] before hydration so Light-mode visitors
+   never fetch or flash Dark-mode photos (loading="lazy" skips display:none). */
+.photo-strip-light {
+  display: grid;
+}
+
+.photo-strip-dark {
+  display: none;
+}
+
+html[data-theme="dark"] .photo-strip-light {
+  display: none;
+}
+
+html[data-theme="dark"] .photo-strip-dark {
+  display: grid;
+}
+
+/* Zero-JS staggered entrance animation (starts at First Paint without waiting
+   for hydration; matches Framer Motion's 460ms [0.22, 1, 0.36, 1] curve). */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-in-section {
+  animation: fade-in-up 460ms cubic-bezier(0.22, 1, 0.36, 1) var(--fade-delay, 0s) both;
+}
+
+/* Spring hover/tap micro-interactions (RK4-integrated CSS linear() springs
+   matching stiffness:400/damping:14 on Footer and stiffness:300/damping:22 on Timeline). */
+.spring-hover-icon {
+  transition:
+    color 200ms ease,
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.spring-hover-icon:hover {
+  transform: scale(1.08);
+}
+
+.spring-hover-card {
+  transition: transform 360ms cubic-bezier(0.22, 1.15, 0.36, 1);
+}
+
+.spring-hover-card:hover {
+  transform: scale(1.03);
+}
+
+.spring-hover-card:active {
+  transform: scale(0.99);
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  .spring-hover-icon {
+    transition:
+      color 200ms ease,
+      transform 982ms linear(0, 0.4319, 1.0565, 1.3083, 1.1935, 0.9929, 0.9058, 0.936, 0.9978, 1.0287, 1.0211, 1.0018, 0.9913, 0.993, 0.9991, 1.0026, 1.0023, 1.0004, 1);
+  }
+
+  .spring-hover-card {
+    transition: transform 656ms linear(0, 0.1472, 0.444, 0.7198, 0.9218, 1.0306, 1.0724, 1.0716, 1.052, 1.0298, 1.0119, 1.0006, 0.9954, 0.9943, 0.9953, 0.997, 0.9986, 0.9997, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-section {
+    animation: none;
+  }
+
+  .spring-hover-icon,
+  .spring-hover-card {
+    transition: color 200ms ease;
+  }
+
+  .spring-hover-icon:hover,
+  .spring-hover-card:hover,
+  .spring-hover-card:active {
+    transform: none;
+  }
 }
 
 /* Quiet Ink project title underline — clipped reveal avoids SVG dash-wrap artifacts */

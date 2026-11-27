@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
 export default function Footer({ delayEntrance = false }: { delayEntrance?: boolean }) {
@@ -15,14 +14,12 @@ export default function Footer({ delayEntrance = false }: { delayEntrance?: bool
     <footer className={`relative z-10 w-full flex flex-col items-center mt-auto py-6${delayEntrance ? ' route-footer-from-home' : ''}`}>
       <div className="max-w-lg w-4/5 mx-auto h-px bg-[var(--color-border)] mb-5" />
       <div className="flex items-center gap-4">
-        <motion.a
+        <a
           href="https://github.com/notMarkMP1/markpeng.github.io"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Source Code"
-          whileHover={{ scale: 1.08 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 14 }}
-          className="relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
+          className="spring-hover-icon relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
         >
           <svg
             width="23"
@@ -48,16 +45,14 @@ export default function Footer({ delayEntrance = false }: { delayEntrance?: bool
           >
             view source code
           </span>
-        </motion.a>
+        </a>
 
-        <motion.a
+        <a
           href="https://linkedin.com/in/markminpeng"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="LinkedIn"
-          whileHover={{ scale: 1.08 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 14 }}
-          className="relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
+          className="spring-hover-icon relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
         >
           <svg
             width="20"
@@ -77,16 +72,14 @@ export default function Footer({ delayEntrance = false }: { delayEntrance?: bool
           >
             view my linkedin
           </span>
-        </motion.a>
+        </a>
 
-        <motion.a
+        <a
           href="https://github.com/notMarkMP1"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="GitHub"
-          whileHover={{ scale: 1.08 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 14 }}
-          className="relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
+          className="spring-hover-icon relative group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] rounded"
         >
           <svg
             width="20"
@@ -110,7 +103,7 @@ export default function Footer({ delayEntrance = false }: { delayEntrance?: bool
           >
             view my github
           </span>
-        </motion.a>
+        </a>
       </div>
       <div className="text-xs text-[var(--color-text-muted)] mt-3">
         &copy; {currentYear} Mark Peng. All rights reserved.

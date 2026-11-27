@@ -1,5 +1,3 @@
-'use client';
-
 import FadeInSection from "@/app/components/FadeInSection";
 import Timeline from "@/app/components/Timeline";
 import Projects from "@/app/components/Projects";

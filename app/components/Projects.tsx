@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 
 interface ProjectItem {
@@ -45,7 +43,7 @@ export default function Projects({ items }: ProjectProps) {
                   src={item.imagePath}
                   alt={item.title}
                   fill
-                  sizes="(max-width: 640px) 100vw, 136px"
+                  sizes="(max-width: 640px) calc(100vw - 32px), 136px"
                   className="object-cover"
                 />
               </div>

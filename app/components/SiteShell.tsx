@@ -9,9 +9,15 @@ import HeroBackdrop from '@/app/components/hero/HeroBackdrop';
 import HeroOverlay from '@/app/components/hero/HeroOverlay';
 import { useSafariChrome } from '@/app/components/hero/safariChrome';
 
-// three.js + both hero worlds load only once `/` is visited; direct visitors to
+// three.js + hero worlds load only once `/` is visited; direct visitors to
 // `/about`, `/blog`, or `/contact` never fetch or initialize WebGL.
-const HeroCanvas = dynamic(() => import('@/app/components/hero/HeroCanvas'), { ssr: false });
+// Kick off the dynamic chunk request on `/` as soon as the layout module evaluates
+// so downloading overlaps with React hydration instead of waiting in series.
+const loadHeroCanvas = () => import('@/app/components/hero/HeroCanvas');
+if (typeof window !== 'undefined' && window.location.pathname === '/') {
+  void loadHeroCanvas();
+}
+const HeroCanvas = dynamic(loadHeroCanvas, { ssr: false });
 
 /** Duration of the feathered canvas veil gliding between `/` and secondary routes. */
 const VEIL_DURATION_MS = 460;

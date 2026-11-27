@@ -10,6 +10,8 @@ interface PersonalPhoto {
   src: string;
   alt: string;
   objectPosition: string;
+  width: number;
+  height: number;
 }
 
 const DARK_PHOTOS: PersonalPhoto[] = [
@@ -18,18 +20,24 @@ const DARK_PHOTOS: PersonalPhoto[] = [
     src: '/images/personal/dark-01-night-street.jpg',
     alt: 'Rain-slicked New York street reflections at night',
     objectPosition: '50% 56%',
+    width: 557,
+    height: 991,
   },
   {
     id: 'dark-2',
     src: '/images/personal/dark-02-machi-dog.jpg',
     alt: 'Illuminated dachshund storefront sign at night',
     objectPosition: '50% 48%',
+    width: 991,
+    height: 991,
   },
   {
     id: 'dark-3',
     src: '/images/personal/dark-03-concert-confetti.jpg',
     alt: 'Confetti falling under blue concert lights at night',
     objectPosition: '50% 56%',
+    width: 557,
+    height: 991,
   },
 ];
 
@@ -39,18 +47,24 @@ const LIGHT_PHOTOS: PersonalPhoto[] = [
     src: '/images/personal/light-01-empire-state.jpg',
     alt: 'Empire State Building rising into bright clouds',
     objectPosition: '50% 42%',
+    width: 743,
+    height: 991,
   },
   {
     id: 'light-2',
     src: '/images/personal/light-02-sunlit-skyline.jpg',
     alt: 'Sunbeams behind a glass tower framed by balcony greenery',
     objectPosition: '50% 50%',
+    width: 1920,
+    height: 976,
   },
   {
     id: 'light-3',
     src: '/images/personal/light-03-floating-convenience.jpg',
     alt: 'Floating convenience store on calm sunlit water',
     objectPosition: '50% 56%',
+    width: 743,
+    height: 991,
   },
 ];
 
@@ -121,10 +135,14 @@ function PhotoLightbox({
         onClick={(e) => e.stopPropagation()}
         className="max-w-4xl max-h-[88vh] flex items-center justify-center cursor-default"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={photo.src}
           alt={photo.alt}
+          width={photo.width}
+          height={photo.height}
+          quality={85}
+          priority
+          sizes="(max-width: 896px) 92vw, 896px"
           className="max-h-[84vh] max-w-full w-auto h-auto object-contain block rounded-[3px]"
           style={{
             boxShadow: isDark
@@ -138,33 +156,49 @@ function PhotoLightbox({
   );
 }
 
+function PhotoGrid({
+  photos,
+  className,
+  onSelect,
+}: {
+  photos: PersonalPhoto[];
+  className: string;
+  onSelect: (photo: PersonalPhoto) => void;
+}) {
+  return (
+    <div className={`mt-5 grid-cols-3 gap-2.5 sm:gap-3.5 ${className}`}>
+      {photos.map((photo) => (
+        <button
+          key={photo.id}
+          type="button"
+          onClick={() => onSelect(photo)}
+          className="group relative block w-full aspect-[4/3] overflow-hidden rounded-[3px] bg-[var(--color-surface)] photo-soft-lift cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)]"
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            fill
+            sizes="(max-width: 640px) 32vw, 210px"
+            className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            style={{ objectPosition: photo.objectPosition }}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function PersonalPhotoStrip() {
   const { theme } = useTheme();
   const [activePhoto, setActivePhoto] = useState<PersonalPhoto | null>(null);
 
-  const photos = theme === 'dark' ? DARK_PHOTOS : LIGHT_PHOTOS;
-
   return (
     <>
-      <div className="mt-5 grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        {photos.map((photo) => (
-          <button
-            key={photo.id}
-            type="button"
-            onClick={() => setActivePhoto(photo)}
-            className="group relative block w-full aspect-[4/3] overflow-hidden rounded-[3px] bg-[var(--color-surface)] photo-soft-lift cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-background)]"
-          >
-            <Image
-              src={photo.src}
-              alt={photo.alt}
-              fill
-              sizes="(max-width: 640px) 32vw, 210px"
-              className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-              style={{ objectPosition: photo.objectPosition }}
-            />
-          </button>
-        ))}
-      </div>
+      {/* Both theme sets are gated by html[data-theme] CSS (display: none on the
+          inactive strip) with default loading="lazy" so browsers only fetch the
+          active theme's 3 photos — zero Light-mode double-fetch or Dark->Light flash. */}
+      <PhotoGrid photos={LIGHT_PHOTOS} className="photo-strip-light" onSelect={setActivePhoto} />
+      <PhotoGrid photos={DARK_PHOTOS} className="photo-strip-dark" onSelect={setActivePhoto} />
 
       <PhotoLightbox
         photo={activePhoto}
