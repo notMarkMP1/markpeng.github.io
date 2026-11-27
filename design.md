@@ -39,7 +39,7 @@ Previous attempts failed by falling into generic templates or inventing unreques
 * **Homepage (`/`):** Runs the dual-world *Nurture* Daylight meadow ↔ *Get Your Wish* Night mirror water hero (Phase 6), with a centered site-canvas fallback where hardware WebGL2 is unavailable.
 
 ### Locked Color Palette (Phase 1)
-Verified and locked across Light (**Sunlit White**) and Dark (**Stark Black**) modes in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css):
+Verified and locked across Light (**Sunlit White**) and Dark (**Stark Black**) modes in [app/globals.css](./app/globals.css):
 
 | Role | Light Mode — Sunlit White (*Nurture* Daylight) | Dark Mode — Stark Black (*Get Your Wish* Night) |
 | :--- | :--- | :--- |
@@ -52,17 +52,17 @@ Verified and locked across Light (**Sunlit White**) and Dark (**Stark Black**) m
 | **Scribble Stroke** | `#26382c` at `0.16` opacity | `#ffffff` at `0.19` opacity |
 
 ### Locked UI Craft Decisions (Phases 1–5)
-* **Light/Dark Toggle ([ThemeToggle.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ThemeToggle.tsx)):** Borderless `h-9 w-9 rounded-lg` icon button in `NavBar.tsx` that lights up with `--color-surface-elevated` on hover (matching active nav pills) — no box border.
-* **Code Blocks & Inline Code ([CodeElements.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/mdx/CodeElements.tsx) & [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css)):** Borderless surface-filled containers (`border: none`) with crisp low-radius corners (`0.25rem` fenced blocks, `0.15rem` inline code) to avoid uneven subpixel corner borders. Double-clicking selects the full inline token or fenced code block cleanly, and fenced blocks include a subtle, borderless corner Copy button.
-* **Photography & Thumbnail Framing — `Soft Lift` (`.photo-soft-lift` / `--shadow-photo` in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css)):** Borderless `rounded-[3px]` images with theme-aware ambient elevation instead of box borders or double-frame mats — a gentle contact shadow in Daylight (`0 1px 2px rgba(22,27,23,0.07), 0 6px 16px -6px rgba(22,27,23,0.14)`) and subtle dark elevation with a `3.5%` inner rim in Night (`0 4px 14px -4px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.035)`). Applied consistently to both `/about` personal photography and `Projects` thumbnails.
-* **Translucent Theme-Matched Portal Lightbox ([PersonalPhotoStrip.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/PersonalPhotoStrip.tsx)):** Lightbox overlays render via `createPortal(..., document.body)` at `z-[100]` so they sit cleanly above `NavBar` (`z-20`) without navbar color dissonance, using a light translucent veil (`rgba(250, 252, 249, 0.56)` Daylight / `rgba(9, 9, 9, 0.62)` Night + `backdrop-blur-[3px]`) so the underlying site remains softly visible instead of wiping out the screen.
+* **Light/Dark Toggle ([ThemeToggle.tsx](./app/components/ThemeToggle.tsx)):** Borderless `h-9 w-9 rounded-lg` icon button in `NavBar.tsx` that lights up with `--color-surface-elevated` on hover (matching active nav pills) — no box border.
+* **Code Blocks & Inline Code ([CodeElements.tsx](./app/components/mdx/CodeElements.tsx) & [app/globals.css](./app/globals.css)):** Borderless surface-filled containers (`border: none`) with crisp low-radius corners (`0.25rem` fenced blocks, `0.15rem` inline code) to avoid uneven subpixel corner borders. Double-clicking selects the full inline token or fenced code block cleanly, and fenced blocks include a subtle, borderless corner Copy button.
+* **Photography & Thumbnail Framing — `Soft Lift` (`.photo-soft-lift` / `--shadow-photo` in [app/globals.css](./app/globals.css)):** Borderless `rounded-[3px]` images with theme-aware ambient elevation instead of box borders or double-frame mats — a gentle contact shadow in Daylight (`0 1px 2px rgba(22,27,23,0.07), 0 6px 16px -6px rgba(22,27,23,0.14)`) and subtle dark elevation with a `3.5%` inner rim in Night (`0 4px 14px -4px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.035)`). Applied consistently to both `/about` personal photography and `Projects` thumbnails.
+* **Translucent Theme-Matched Portal Lightbox ([PersonalPhotoStrip.tsx](./app/components/PersonalPhotoStrip.tsx)):** Lightbox overlays render via `createPortal(..., document.body)` at `z-[100]` so they sit cleanly above `NavBar` (`z-20`) without navbar color dissonance, using a light translucent veil (`rgba(250, 252, 249, 0.56)` Daylight / `rgba(9, 9, 9, 0.62)` Night + `backdrop-blur-[3px]`) so the underlying site remains softly visible instead of wiping out the screen.
 * **Optical Vertical Rhythm (`/about`):** `Timeline` items use `last:mb-0` so section spacing (`mt-8`) matches symmetrically around `Timeline` and `Projects`; `Projects` rows use `sm:items-center sm:min-h-[96px]` with `136×80` thumbnails so 1-line and 2-line project descriptions keep an identical vertical thumbnail cadence.
 
 ---
 
 ## 4. Typography — **Liner Notes** *(Locked — Phase 2)*
 
-Inspired by the East Asian Mincho / Batang liner-note typography and clean technical metadata of Porter Robinson's *Nurture* era, wired via `next/font/google` in [app/layout.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/layout.tsx) and styled in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css):
+Inspired by the East Asian Mincho / Batang liner-note typography and clean technical metadata of Porter Robinson's *Nurture* era, wired via `next/font/google` in [app/layout.tsx](./app/layout.tsx) and styled in [app/globals.css](./app/globals.css):
 
 * **Display & Headings (`--font-shippori` / `.font-heading`):** `Shippori Mincho` (`400`, `500`, `600`, `700`) — used at calm `500` medium weight (`tracking: 0.01em–0.015em`) for page titles (`2.2rem` on secondary routes, `1.95rem` on blog articles), section headings (`1.4rem` with a subtle `.section-heading` trailing hairline rule), and MDX blockquotes.
 * **Body & UI (`--font-plex-sans` / `.font-body`):** `IBM Plex Sans` (`400`, `500`, `600`, `700`, normal + italic) — crisp, engineered grotesque for navigation (`15px`, `500`), timeline/project entries, and MDX prose (`0.96875rem`, `line-height: 1.74`).
@@ -73,7 +73,7 @@ Inspired by the East Asian Mincho / Batang liner-note typography and clean techn
 ## 5. Signature *Nurture* Motifs & Interaction Rules
 
 ### A. Procedural Scroll-Drawn Scribble (`ScrollDrawLine` + `generateOrganicPath`) — **Implemented Baseline**
-* **Current Status:** Working and committed (`8fcc9af`) in [app/components/ScrollDrawLine.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ScrollDrawLine.tsx) and [app/utils/generateOrganicPath.ts](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/utils/generateOrganicPath.ts).
+* **Current Status:** Working and committed (`8fcc9af`) in [app/components/ScrollDrawLine.tsx](./app/components/ScrollDrawLine.tsx) and [app/utils/generateOrganicPath.ts](./app/utils/generateOrganicPath.ts).
 * **Behavior:** Generates a fresh seeded *Nurture*-style scribble per refresh across four stroke personalities (`loose`, `crisp`, `whip`, `sharp`), draws smoothly with slow-then-fast catch-up easing, and uses a CSS `mask-image` to fade gently behind the centered `max-w-2xl` text column on narrower desktops.
 * **Page Threshold Rule (Locked):** Only mount/render on secondary pages whose scrollable document height passes a meaningful threshold (e.g., `scrollHeight > innerHeight * 1.35`, such as `/about` and long `/blog/[slug]` posts). **Do not** render on short pages like `/blog` index or `/contact`, and never on `/`.
 * **Completed Upgrades (Phases 1 & 3):** Theme-aware Light/Dark stroke color (Phase 1), automatic document height-threshold gating (`scrollHeight > innerHeight * 1.35` via `ResizeObserver`), and `prefers-reduced-motion` support (Phase 3).
@@ -84,7 +84,7 @@ After live comparison across 5 candidates (`Clean`, `Raw Trail`, `Ink Echo`, `Ho
 * `ScrollDrawLine` stands alone as the signature kinetic *Nurture* background motif on tall secondary pages (`/about` and long `/blog/[slug]` articles), preserving crisp reading focus and effortless scannability.
 
 ### C. Theme-Matched Personal Photography (`PersonalPhotoStrip`) — **Locked (Phase 4)**
-After prototyping 6 layouts live with Mark's real photos (`Margin Prints`, `Single Print`, `3-Up Strip`, `Peek Anchors`, `Liner Notes`, and `Horizon Slice`) and 6 edge/border treatments, Mark locked a clean **inline 3-photo strip** in [app/components/PersonalPhotoStrip.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/PersonalPhotoStrip.tsx):
+After prototyping 6 layouts live with Mark's real photos (`Margin Prints`, `Single Print`, `3-Up Strip`, `Peek Anchors`, `Liner Notes`, and `Horizon Slice`) and 6 edge/border treatments, Mark locked a clean **inline 3-photo strip** in [app/components/PersonalPhotoStrip.tsx](./app/components/PersonalPhotoStrip.tsx):
 * **Theme-Matched Sets (`public/images/personal/`):**
   * **Daylight (Light Mode):** Empire State Building (`light-01-empire-state.jpg`) → sunlit greenery & glass tower (`light-02-sunlit-skyline.jpg`, centre) → floating convenience store on water (`light-03-floating-convenience.jpg`).
   * **Night (Dark Mode):** Rainy NYC street reflections (`dark-01-night-street.jpg`) → illuminated dachshund storefront sign (`dark-02-machi-dog.jpg`, centre) → blue/gold concert confetti (`dark-03-concert-confetti.jpg`).
@@ -96,27 +96,27 @@ After prototyping 6 layouts live with Mark's real photos (`Margin Prints`, `Sing
 
 Strictly preserve the existing 4 routes:
 
-### 1. Home (`/`) — [app/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/page.tsx)
+### 1. Home (`/`) — [app/page.tsx](./app/page.tsx)
 * **Implemented (Phase 6):** See [hero.md](./hero.md) for the complete dual-theme *Nurture* Daylight meadow ↔ *Get Your Wish* Night mirror water stage specification, typography/button craft, zero-lag transition architecture, botanical grass upgrades, and centered no-WebGL2 fallback. Reference prototype snapshot (not merged into `project-nurture`): branch `proto/phase6-hero-draft`, commit `0d587a4`.
 
-### 2. About (`/about`) — [app/components/AboutSection.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/AboutSection.tsx)
+### 2. About (`/about`) — [app/components/AboutSection.tsx](./app/components/AboutSection.tsx)
 * **Content Structure:** Keep the clean minimalist flow (`About` header → short intro → theme-matched 3-photo strip → `Timeline` → `Projects`).
-* **Visual Layer:** Theme-aware, height-gated `ScrollDrawLine` + [PersonalPhotoStrip.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/PersonalPhotoStrip.tsx) with **Soft Lift** elevation and translucent portal lightbox.
-* **`Timeline` ([Timeline.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Timeline.tsx)):** Crisp left accent rail, semantic Light/Dark tokens, tabular mono dates, and `last:mb-0` so section spacing stays symmetric.
-* **`Projects` ([Projects.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Projects.tsx)) — Locked (Phase 5):**
+* **Visual Layer:** Theme-aware, height-gated `ScrollDrawLine` + [PersonalPhotoStrip.tsx](./app/components/PersonalPhotoStrip.tsx) with **Soft Lift** elevation and translucent portal lightbox.
+* **`Timeline` ([Timeline.tsx](./app/components/Timeline.tsx)):** Crisp left accent rail, semantic Light/Dark tokens, tabular mono dates, and `last:mb-0` so section spacing stays symmetric.
+* **`Projects` ([Projects.tsx](./app/components/Projects.tsx)) — Locked (Phase 5):**
   * Clean vertical list with visible `136×80` **Soft Lift** thumbnails (responsive `16:9` on mobile), `sm:items-center sm:min-h-[96px]` uniform vertical cadence, filled Quiet Ink SVG hover underlines (`.project-ink-underline`), and calm dot-separated `IBM Plex Mono` tech metadata.
 
-### 3. Blog (`/blog` & `/blog/[slug]`) — [app/blog/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/blog/page.tsx)
+### 3. Blog (`/blog` & `/blog/[slug]`) — [app/blog/page.tsx](./app/blog/page.tsx)
 * **Content Structure:** Keep the minimalist post list and MDX article reader. Do not add search/filter widgets unless Mark requests them later.
 * **Visual Layer:** Semantic Light/Dark tokens for list dividers, hover states, MDX prose, `<Callout>` notes, interactive React embeds, blockquotes, and borderless code blocks (dual-theme `rehype-highlight`, double-click selection, and corner Copy button). `ScrollDrawLine` is active on tall `/blog/[slug]` articles (automatically height-gated and reduced-motion aware).
 
-### 4. Contact (`/contact`) — [app/contact/page.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/contact/page.tsx)
+### 4. Contact (`/contact`) — [app/contact/page.tsx](./app/contact/page.tsx)
 * **Content Structure:** Keep the clean email display and Website Credits link (fixing the existing `"website repostitory"` typo). No contact form, no fake coordinates.
 * **Visual Layer:** Clean semantic Light/Dark tokens only. No `ScrollDrawLine` (page is below height threshold) and no cursor effects.
 
 ### Shared Chrome (`NavBar` & `Footer`)
-* **[NavBar.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/NavBar.tsx):** Keep the centered spring-pill navigation (`Home`, `About`, `Blog`, `Contact`) + add a subtle, unobtrusive Light/Dark toggle button.
-* **[Footer.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Footer.tsx):** Remains hidden on `/`; update divider, tooltips, SVG icon contrast (for Light + Dark), and copyright text to semantic tokens.
+* **[NavBar.tsx](./app/components/NavBar.tsx):** Keep the centered spring-pill navigation (`Home`, `About`, `Blog`, `Contact`) + add a subtle, unobtrusive Light/Dark toggle button.
+* **[Footer.tsx](./app/components/Footer.tsx):** Remains hidden on `/`; update divider, tooltips, SVG icon contrast (for Light + Dark), and copyright text to semantic tokens.
 
 ---
 
@@ -124,29 +124,29 @@ Strictly preserve the existing 4 routes:
 
 ### Completed Baseline
 * [x] Rebased `project-nurture` cleanly onto `main` (`b03a07c`).
-* [x] Built procedural RNG scroll-draw scribble with 4 stroke personalities and CSS `mask-image` content-column fade ([ScrollDrawLine.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ScrollDrawLine.tsx), [generateOrganicPath.ts](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/utils/generateOrganicPath.ts), commit `8fcc9af`).
+* [x] Built procedural RNG scroll-draw scribble with 4 stroke personalities and CSS `mask-image` content-column fade ([ScrollDrawLine.tsx](./app/components/ScrollDrawLine.tsx), [generateOrganicPath.ts](./app/utils/generateOrganicPath.ts), commit `8fcc9af`).
 
 ### Phase 1 — Dual-Theme Foundation & Semantic Tokens *(Completed)*
 * [x] Implemented `prefers-color-scheme` theme provider with zero-FOUC initialization and a borderless hover-pill Light/Dark toggle in `NavBar.tsx`.
-* [x] Locked CSS custom property tokens in [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css) for Light (**Sunlit White** `#fafcf9` + *Nurture* meadow green) and Dark (**Stark Black** `#090909` + restrained green/sky accents).
+* [x] Locked CSS custom property tokens in [app/globals.css](./app/globals.css) for Light (**Sunlit White** `#fafcf9` + *Nurture* meadow green) and Dark (**Stark Black** `#090909` + restrained green/sky accents).
 * [x] Replaced hardcoded dark-only Tailwind colors across `NavBar`, `Footer`, `Timeline`, `Projects`, `Blog`, `Contact` (fixing the `"website repostitory"` typo), and `not-found`.
 * [x] Added dual Light/Dark `rehype-highlight` code styles, borderless low-radius code containers with double-click selection & corner copy button, `<Callout>` + interactive MDX sandbox post, and theme-aware `ScrollDrawLine` on `/about` and `/blog/[slug]`.
 
 ### Phase 2 — Typography Research & Refinement *(Completed — Liner Notes)*
 * [x] Researched *Nurture*-era typography and prototyped 5 interactive drafts (`Baseline Refined`, `Liner Notes`, `Sunlit Journal`, `Photobook Spread`, `nurtu.re Interface`) across `/about`, `/blog/[slug]`, `/blog`, and `/contact` in both Daylight and Night themes.
-* [x] Locked **Liner Notes** (`Shippori Mincho` + `IBM Plex Sans` + `IBM Plex Mono`) in [app/layout.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/layout.tsx) and [app/globals.css](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/globals.css) — unifying secondary-page H1/H2 scale, medium `500` display weights, hairline section rules, tabular mono dates/metadata, and MDX prose rhythm.
+* [x] Locked **Liner Notes** (`Shippori Mincho` + `IBM Plex Sans` + `IBM Plex Mono`) in [app/layout.tsx](./app/layout.tsx) and [app/globals.css](./app/globals.css) — unifying secondary-page H1/H2 scale, medium `500` display weights, hairline section rules, tabular mono dates/metadata, and MDX prose rhythm.
 
 ### Phase 3 — Secondary-Page Atmosphere & Interactivity Exploration *(Completed — Clean / `ScrollDrawLine` Only)*
-* [x] Upgraded [ScrollDrawLine.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/ScrollDrawLine.tsx) with automatic page-height threshold gating (`scrollHeight > innerHeight * 1.35` via `ResizeObserver`) and `prefers-reduced-motion` support.
+* [x] Upgraded [ScrollDrawLine.tsx](./app/components/ScrollDrawLine.tsx) with automatic page-height threshold gating (`scrollHeight > innerHeight * 1.35` via `ResizeObserver`) and `prefers-reduced-motion` support.
 * [x] Prototyped and compared 5 atmosphere/interactivity directions live (`Clean`, `Raw Trail`, `Ink Echo`, `Hover Ink`, `Paper & Motes`).
 * [x] Locked **Clean (`ScrollDrawLine` only)** — intentionally cutting `MouseTrail` and extra cursor/ambient overlays to keep secondary pages calm and focused.
 
 ### Phase 4 — `/about` Personal Presence & Photography *(Completed — Theme-Matched 3-Up Strip)*
 * [x] Prototyped 6 personal-presence layouts and 6 edge/border treatments live with Mark's real Daylight and Night photography.
-* [x] Locked [PersonalPhotoStrip.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/PersonalPhotoStrip.tsx) with curated Light & Dark 3-photo sets (`public/images/personal/`), caption-free `aspect-[4/3]` strip, **Soft Lift** borderless elevation (`.photo-soft-lift`), and a translucent theme-matched portal lightbox (`createPortal` at `z-[100]`).
+* [x] Locked [PersonalPhotoStrip.tsx](./app/components/PersonalPhotoStrip.tsx) with curated Light & Dark 3-photo sets (`public/images/personal/`), caption-free `aspect-[4/3]` strip, **Soft Lift** borderless elevation (`.photo-soft-lift`), and a translucent theme-matched portal lightbox (`createPortal` at `z-[100]`).
 
 ### Phase 5 — `/about` Projects Section Redesign *(Completed — Quiet Ink + Soft Lift)*
-* [x] Replaced rainbow tech pills with quiet dot-separated `IBM Plex Mono` metadata and replaced the jumpy floating hover image with inline `136×80` **Soft Lift** thumbnails in [Projects.tsx](file:///C:/Users/markm_4eetbmy/Documents/VisualStudio/projects/markpeng.github.io/app/components/Projects.tsx).
+* [x] Replaced rainbow tech pills with quiet dot-separated `IBM Plex Mono` metadata and replaced the jumpy floating hover image with inline `136×80` **Soft Lift** thumbnails in [Projects.tsx](./app/components/Projects.tsx).
 * [x] Added Quiet Ink SVG hover underlines (`.project-ink-underline`) and balanced vertical cadence (`sm:items-center sm:min-h-[96px]` on `Projects` rows + `last:mb-0` on `Timeline` items).
 
 ### Phase 6 — Homepage (`/`) *Nurture* Hero Overhaul *(Implemented per [hero.md](./hero.md))*

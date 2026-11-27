@@ -10,7 +10,9 @@ export const metadata = {
 };
 
 export default function BlogHome() {
-    const posts = getMDXData(path.join('app', 'blog', 'posts'));
+    const posts = getMDXData(path.join('app', 'blog', 'posts')).filter(
+        (post) => !post.metadata.unlisted
+    );
     posts.sort((a, b) => dateCompare(b.metadata.publishedAt, a.metadata.publishedAt));
 
     return (
@@ -21,27 +23,29 @@ export default function BlogHome() {
             <FadeInSection delay={0.07}>
                 <p className="mt-1.5 mb-7 text-[15.5px] leading-relaxed text-[var(--color-text-secondary)]">maybe ill use this more eventually (currently unused)</p>
             </FadeInSection>
-            <ul className="space-y-4">
-                {posts.map((post, index) => (
-                    <FadeInSection delay={0.13 + index * 0.05} key={post.metadata.slug}>
-                        <li className="border-b border-[var(--color-border)] pb-4 transition-colors duration-200 hover:border-[var(--color-border-muted)]">
-                            <Link href={`/blog/${post.metadata.slug}`} className="group block">
-                                <h2 className="text-[17.5px] font-semibold font-body leading-snug text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors duration-200">
-                                    <span className="font-meta text-xs font-normal text-[var(--color-text-muted)] mr-2.5">
-                                        {formatDate(post.metadata.publishedAt)}
-                                    </span>
-                                    {post.metadata.title}
-                                </h2>
-                                {post.metadata.description && (
-                                    <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-text-secondary)]">
-                                        {post.metadata.description}
-                                    </p>
-                                )}
-                            </Link>
-                        </li>
-                    </FadeInSection>
-                ))}
-            </ul>
+            {posts.length > 0 && (
+                <ul className="space-y-4">
+                    {posts.map((post, index) => (
+                        <FadeInSection delay={0.13 + index * 0.05} key={post.metadata.slug}>
+                            <li className="border-b border-[var(--color-border)] pb-4 transition-colors duration-200 hover:border-[var(--color-border-muted)]">
+                                <Link href={`/blog/${post.metadata.slug}`} className="group block">
+                                    <h2 className="text-[17.5px] font-semibold font-body leading-snug text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors duration-200">
+                                        <span className="font-meta text-xs font-normal text-[var(--color-text-muted)] mr-2.5">
+                                            {formatDate(post.metadata.publishedAt)}
+                                        </span>
+                                        {post.metadata.title}
+                                    </h2>
+                                    {post.metadata.description && (
+                                        <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                                            {post.metadata.description}
+                                        </p>
+                                    )}
+                                </Link>
+                            </li>
+                        </FadeInSection>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 }

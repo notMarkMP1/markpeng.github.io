@@ -8,7 +8,7 @@ type Metadata = {
     lastModifiedAt: string;
     slug: string;
     image?: string;
-
+    unlisted?: boolean;
 }
 
 type MDXPost = {
@@ -52,6 +52,7 @@ function parseMDXFile(content: string): MDXPost {
     const lastModifiedAtMatch = frontmatterContent.match(/lastModifiedAt:\s*["'](.+?)["']/);
     const slugMatch = frontmatterContent.match(/slug:\s*["'](.+?)["']/);
     const imageMatch = frontmatterContent.match(/image:\s*["'](.+?)["']/);
+    const unlistedMatch = frontmatterContent.match(/unlisted:\s*(true|false)/i);
     
     if (!titleMatch || !publishedAtMatch || !slugMatch) {
         throw new Error('Missing required frontmatter fields (title, publishedAt, slug)');
@@ -67,6 +68,7 @@ function parseMDXFile(content: string): MDXPost {
         lastModifiedAt: lastModifiedAtMatch ? lastModifiedAtMatch[1] : '',
         slug: slug,
         image: imageMatch ? imageMatch[1] : undefined,
+        unlisted: unlistedMatch ? unlistedMatch[1].toLowerCase() === 'true' : false,
     };
     
     return {

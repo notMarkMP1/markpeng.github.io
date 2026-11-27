@@ -67,28 +67,40 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://markpeng.me"),
   title: {
     default: "Mark Peng",
     template: "%s | Mark Peng",
   },
-  description: "my personal website playground",
+  description: "Software engineer and computer science undergraduate at the University of Toronto.",
   icons: {
     icon: "/favicon.ico",
-  }
+  },
+  openGraph: {
+    title: "Mark Peng",
+    description: "Software engineer and computer science undergraduate at the University of Toronto.",
+    url: "https://markpeng.me",
+    siteName: "Mark Peng",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Mark Peng",
+    description: "Software engineer and computer science undergraduate at the University of Toronto.",
+  },
 }
 
 const jsonLD = {
-    "@context": "https://schema.org/",
-    "@type": "Person",
-    "name": "Mark Peng",
-    "alternateName": "Mark P.",
-    "url": "https://markpeng.me",
-    "image": "",
-    "sameAs": [
-      "https://linkedin.com/in/markminpeng",
-      "https://github.com/notMarkMP1"
-    ],
-    "jobTitle": "Software Engineer"  
+  "@context": "https://schema.org/",
+  "@type": "Person",
+  "name": "Mark Peng",
+  "alternateName": "Mark P.",
+  "url": "https://markpeng.me",
+  "sameAs": [
+    "https://linkedin.com/in/markminpeng",
+    "https://github.com/notMarkMP1",
+  ],
+  "jobTitle": "Software Engineer",
 }
 
 // Runs synchronously before first paint to prevent flash of wrong theme (FOUC)

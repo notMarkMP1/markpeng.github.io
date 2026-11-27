@@ -29,6 +29,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: post.metadata.title,
         description: post.metadata.description,
+        ...(post.metadata.unlisted && {
+            robots: {
+                index: false,
+                follow: false,
+            },
+        }),
         openGraph: {
             title: post.metadata.title,
             description: post.metadata.description,
