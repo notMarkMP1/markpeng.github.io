@@ -843,8 +843,9 @@ html[data-hero-bleed] {
 /* Safari 26 tints its status-bar strip from a fixed element touching the top edge,
    but only one taller than 10px with a solid background colour. This one paints
    nothing (its background is clipped to text it doesn't have), yet keeps that strip
-   on the scene's sky (or night void) instead of the page background. Its colour is
-   switched by safariChrome.ts as the theme sweep reaches the top of the sky. */
+   matched to the hero sky on `/` and to the page canvas on secondary routes. Its
+   colour is driven by safariChrome.ts via html[data-safari-tint] and nudged so
+   Safari drops any cached tint across route changes and theme toggles. */
 .hero-top-tint {
   display: none;
   position: fixed;
@@ -854,7 +855,7 @@ html[data-hero-bleed] {
   z-index: 2147483647;
   height: 11px;
   border: 0;
-  /* The meadow sky's top edge (as rendered in Display P3) */
+  /* SSR default on Light `/`: the meadow sky's top edge (as rendered in Display P3) */
   background-color: #5f8fdc;
   background-color: color(display-p3 0.329 0.565 0.878);
   -webkit-background-clip: text;
@@ -862,9 +863,35 @@ html[data-hero-bleed] {
   pointer-events: none;
 }
 
-html[data-theme="dark"]:not([data-hero-tint]) .hero-top-tint,
-html[data-hero-tint="dark"] .hero-top-tint {
+/* SSR defaults before safariChrome.ts stamps html[data-safari-tint] */
+html:not([data-safari-tint]) .hero-top-tint[data-surface="page"] {
+  background-color: #fafcf9;
+}
+
+html[data-theme="dark"]:not([data-safari-tint]) .hero-top-tint {
   background-color: #08090d;
+}
+
+html[data-theme="dark"]:not([data-safari-tint]) .hero-top-tint[data-surface="page"] {
+  background-color: #07080b;
+}
+
+/* Explicit runtime states managed by safariChrome.ts */
+html[data-safari-tint="hero-light"] .hero-top-tint {
+  background-color: #5f8fdc;
+  background-color: color(display-p3 0.329 0.565 0.878);
+}
+
+html[data-safari-tint="hero-dark"] .hero-top-tint {
+  background-color: #08090d;
+}
+
+html[data-safari-tint="page-light"] .hero-top-tint {
+  background-color: #fafcf9;
+}
+
+html[data-safari-tint="page-dark"] .hero-top-tint {
+  background-color: #07080b;
 }
 
 /* Changing the size makes Safari re-sample a colour it cached */
@@ -994,8 +1021,7 @@ html[data-hero-canvas="live"] .hero-backdrop {
 }
 
 /* Fallback mode uses the page's own theme canvas instead of the hero layers */
-html[data-hero-fallback="true"] .hero-layer,
-html[data-hero-fallback="true"] .hero-top-tint {
+html[data-hero-fallback="true"] .hero-layer {
   display: none;
 }
 

@@ -89,7 +89,7 @@ export default function RootLayout({
         }}
         />
       </head>
-      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} relative font-body flex flex-col min-h-screen antialiased`}>
+      <body className={`${shipporiMincho.variable} ${ibmPlexSans.variable} ${ibmPlexMono.variable} font-body flex flex-col min-h-screen antialiased`}>
         <ThemeProvider>
           <SiteShell>{children}</SiteShell>
         </ThemeProvider>

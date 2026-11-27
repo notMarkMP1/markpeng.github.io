@@ -7,6 +7,7 @@ import NavBar from '@/app/components/NavBar';
 import Footer from '@/app/components/Footer';
 import HeroBackdrop from '@/app/components/hero/HeroBackdrop';
 import HeroOverlay from '@/app/components/hero/HeroOverlay';
+import { useSafariChrome } from '@/app/components/hero/safariChrome';
 
 // three.js + both hero worlds load only once `/` is visited; direct visitors to
 // `/about`, `/blog`, or `/contact` never fetch or initialize WebGL.
@@ -22,6 +23,9 @@ type RouteTransitionKind = 'initial' | 'home-to-page' | 'page-to-home' | 'page-t
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === '/';
+
+  // iOS Safari 26: status-bar edge tint across all routes + bottom toolbar bleed on `/`
+  useSafariChrome(isHome);
 
   const prevIsHomeRef = useRef<boolean | null>(null);
   const transitionKind: RouteTransitionKind =
@@ -88,8 +92,14 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
   const delaySecondaryEntry = transitionKind === 'home-to-page' || fromHomePath === pathname;
 
+  const showOverlay = isHome || overlayMounted;
+
   return (
     <>
+      {/* Invisible 11px top-edge sampler so iOS 26 Safari tints the status bar
+          accurately on both `/` and secondary routes without caching stale colours. */}
+      <div aria-hidden="true" data-surface={isHome ? 'hero' : 'page'} className="hero-top-tint" />
+
       {hasVisitedHome && (
         <>
           <HeroBackdrop active={isHome} paused={heroPaused} />
@@ -113,7 +123,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="relative z-10 flex-grow flex flex-col">
-        {overlayMounted && (
+        {showOverlay && (
           <div
             aria-hidden={!isHome}
             data-visible={overlayVisible ? 'true' : 'false'}

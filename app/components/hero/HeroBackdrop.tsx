@@ -11,13 +11,10 @@ interface HeroBackdropProps {
 
 export default function HeroBackdrop({ active = true, paused = false }: HeroBackdropProps) {
   return (
-    <>
-      {active && <div aria-hidden="true" className="hero-top-tint" />}
-      <div
-        aria-hidden="true"
-        className={`hero-backdrop hero-layer pointer-events-none z-0${active ? '' : ' hero-layer-inactive'}`}
-        style={paused ? { visibility: 'hidden' } : undefined}
-      />
-    </>
+    <div
+      aria-hidden="true"
+      className={`hero-backdrop hero-layer pointer-events-none z-0${active ? '' : ' hero-layer-inactive'}`}
+      style={paused ? { visibility: 'hidden' } : undefined}
+    />
   );
 }
