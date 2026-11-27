@@ -86,7 +86,7 @@ export default function HeroOverlay() {
       apply();
     };
     const onMove = (e: PointerEvent) => {
-      if (motionQuery.matches) return;
+      if (motionQuery.matches || document.documentElement.dataset.heroFallback === 'true') return;
       targetX = (e.clientX / window.innerWidth) * 100;
       targetY = (e.clientY / window.innerHeight) * 100;
       if (!raf) raf = requestAnimationFrame(tick);
@@ -117,8 +117,8 @@ export default function HeroOverlay() {
           headline rests on the scene and its light instead of hanging off the nav. The
           split scales with the room available, so short phones never crowd the
           horizon. Tablets and desktop keep the 10vh rhythm. */}
-      <div className="mx-auto flex min-h-[calc(59svh-4.45rem)] w-full max-w-4xl flex-col items-center text-center sm:min-h-0 sm:pt-[10vh]">
-        <div aria-hidden="true" className="flex-[4] sm:hidden" />
+      <div className="hero-overlay-inner mx-auto flex min-h-[calc(59svh-4.45rem)] w-full max-w-4xl flex-col items-center text-center sm:min-h-0 sm:pt-[10vh]">
+        <div aria-hidden="true" className="hero-sky-spacer flex-[4] sm:hidden" />
         <FadeInSection>
           <h1
             ref={titleRef}
@@ -142,7 +142,7 @@ export default function HeroOverlay() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hero-action group inline-flex items-center gap-1.5 rounded-lg px-3 py-2 font-body text-[13.5px] font-medium sm:gap-2 sm:px-3.5 sm:text-[14px] backdrop-blur-[4px] transition-[background-color,color,translate,scale] duration-200 ease-out hover:-translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
+                className="hero-action group inline-flex items-center gap-1.5 rounded-lg px-3 py-2 font-body text-[13.5px] font-medium sm:gap-2 sm:px-3.5 sm:text-[14px] backdrop-blur-[4px] transition-[background-color,color,translate,scale] duration-200 ease-out hover:-translate-y-[1px] focus-visible:outline-none active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
               >
                 <span className="hero-action-icon inline-flex transition-colors duration-200 ease-out">
                   {link.icon}
@@ -167,7 +167,7 @@ export default function HeroOverlay() {
             ))}
           </div>
         </FadeInSection>
-        <div aria-hidden="true" className="flex-[3] sm:hidden" />
+        <div aria-hidden="true" className="hero-sky-spacer flex-[3] sm:hidden" />
       </div>
     </section>
   );

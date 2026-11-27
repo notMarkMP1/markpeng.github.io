@@ -268,10 +268,12 @@ function HeroCompositor({ quality, themeRef, input, reducedMotion, onFirstFrame 
         if (!state.scenes[target]) {
           // Toggled before idle pre-warm finished: build now (rare path)
           const { width, height } = sizeRef.current;
+          const bleed = bleedFor(height);
           const created =
             target === 'light'
-              ? createNurtureMeadowScene(gl, quality.meadow, width, height)
-              : createNightWaterStage(gl, quality.water, width, height);
+              ? createNurtureMeadowScene(gl, quality.meadow, width, height - bleed)
+              : createNightWaterStage(gl, quality.water, width, height - bleed);
+          if (bleed > 0) created.resize(width, height, bleed);
           state.scenes[target] = created;
           state.ready[target] = true;
         }
@@ -454,8 +456,8 @@ class CanvasErrorBoundary extends Component<{ onError: () => void; children: Rea
 
 export default function HeroCanvas() {
   const [env, setEnv] = useState<HeroEnvironment | null>(null);
-  // The scene can't run here (no hardware WebGL2) or lost its context: the flat
-  // CSS backdrop stays instead
+  // The scene can't run here (no hardware WebGL2) or lost its context: switch to
+  // the centered pre-Nurture fallback layout (html[data-hero-fallback="true"])
   const [failed, setFailed] = useState(false);
   const [quality, setQuality] = useState<HeroQuality | null>(null);
   const [visible, setVisible] = useState(false);
@@ -564,10 +566,9 @@ export default function HeroCanvas() {
     };
   }, []);
 
-  // Once the opaque canvas has fully faded in, the CSS backdrop underneath is pure
-  // overhead: Chrome still re-rasterises its full-screen gradients whenever a theme
-  // toggle cross-fades them, which stalled the first toggles by ~100–500 ms.
-  // Hide it while the canvas covers it; it comes back if the canvas fails.
+  // Once the opaque canvas has fully faded in, skip painting the initial-paint
+  // backdrop underneath it; if the canvas fails or loses its context, switch to
+  // the centered pre-Nurture fallback layout (globals.css).
   const [covered, setCovered] = useState(false);
   const fadeMs = env?.reducedMotion ? 0 : CANVAS_FADE_MS;
   useEffect(() => {
@@ -583,6 +584,14 @@ export default function HeroCanvas() {
       delete root.dataset.heroCanvas;
     };
   }, [covered, failed]);
+  useEffect(() => {
+    if (!failed) return;
+    const root = document.documentElement;
+    root.dataset.heroFallback = 'true';
+    return () => {
+      delete root.dataset.heroFallback;
+    };
+  }, [failed]);
 
   if (!env || failed) return null;
 

@@ -585,7 +585,6 @@ body {
 @property --hero-btn-text-hover { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
 @property --hero-btn-icon { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
 @property --hero-btn-arrow { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
-@property --hero-btn-shadow { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-btn-lift { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --hero-focus { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
 @property --hero-focus-halo { syntax: '<color>'; inherits: true; initial-value: transparent; }
@@ -599,7 +598,7 @@ body {
 @property --home-nav-focus { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
 
 /* NavBar on the home route only: original borderless floating bar, sky-legible ink */
-.home-nav {
+html:not([data-hero-fallback="true"]) .home-nav {
   --home-nav-text: #ffffff;
   --home-nav-muted: rgba(255, 255, 255, 0.8);
   --home-nav-pill: rgba(255, 255, 255, 0.22);
@@ -620,7 +619,7 @@ body {
     --home-nav-focus var(--hero-duration) var(--hero-ease);
 }
 
-html[data-theme="dark"] .home-nav {
+html[data-theme="dark"]:not([data-hero-fallback="true"]) .home-nav {
   --home-nav-text: #f4f8ff;
   --home-nav-muted: rgba(205, 218, 240, 0.68);
   --home-nav-pill: rgba(180, 210, 255, 0.11);
@@ -643,7 +642,6 @@ html[data-theme="dark"] .home-nav {
   --hero-btn-text-hover: #154a8f;
   --hero-btn-icon: #2c6cc0;
   --hero-btn-arrow: rgba(29, 90, 168, 0.62);
-  --hero-btn-shadow: rgba(255, 255, 255, 0);
   --hero-btn-lift: rgba(18, 64, 132, 0.12);
   --hero-focus: rgba(29, 90, 168, 0.75);
   --hero-focus-halo: rgba(2, 8, 20, 0);
@@ -663,7 +661,6 @@ html[data-theme="dark"] .home-nav {
     --hero-btn-text-hover var(--hero-duration) var(--hero-ease),
     --hero-btn-icon var(--hero-duration) var(--hero-ease),
     --hero-btn-arrow var(--hero-duration) var(--hero-ease),
-    --hero-btn-shadow var(--hero-duration) var(--hero-ease),
     --hero-btn-lift var(--hero-duration) var(--hero-ease),
     --hero-focus var(--hero-duration) var(--hero-ease),
     --hero-focus-halo var(--hero-duration) var(--hero-ease),
@@ -686,7 +683,6 @@ html[data-theme="dark"] .hero-overlay {
   --hero-btn-text-hover: #ffffff;
   --hero-btn-icon: #a8c2e8;
   --hero-btn-arrow: #7f9bc4;
-  --hero-btn-shadow: rgba(0, 0, 0, 0);
   /* Invisible over the night stage but never fully transparent: Chrome skips drawing
      a 0-alpha shadow, then built its blur pipeline mid-way through the first
      toggle to light (~100 ms frame on some GPUs). Drawing it from page load avoids that. */
@@ -728,10 +724,8 @@ html[data-theme="dark"] .hero-overlay {
 .hero-action {
   background-color: var(--hero-btn-bg);
   color: var(--hero-btn-text);
-  text-shadow: 0 1px 8px var(--hero-btn-shadow);
   /* Soft ambient lift (no border / bevel) so the chip keeps its shape over clouds */
   box-shadow: 0 1px 2px var(--hero-btn-lift), 0 4px 14px var(--hero-btn-lift);
-  --tw-ring-color: var(--hero-focus);
 }
 
 .hero-action:hover {
@@ -739,7 +733,6 @@ html[data-theme="dark"] .hero-overlay {
   color: var(--hero-btn-text-hover);
 }
 
-/* Unlayered box-shadow above would hide Tailwind's ring utility — draw the ring here */
 .hero-action:focus-visible {
   box-shadow:
     0 0 0 2px var(--hero-focus),
@@ -761,6 +754,43 @@ html[data-theme="dark"] .hero-overlay {
 .hero-action:focus-visible .hero-action-icon,
 .hero-action:focus-visible .hero-action-arrow {
   color: var(--hero-btn-text-hover);
+}
+
+/* No-WebGL2 fallback: centered pre-Nurture layout on the site's theme canvas
+   with Liner Notes typography and clean surface buttons */
+html[data-hero-fallback="true"] .hero-overlay {
+  --hero-duration: 200ms;
+  --hero-bio: var(--color-text-secondary);
+  --hero-bio-shadow: transparent;
+  --hero-btn-bg: var(--color-surface);
+  --hero-btn-bg-hover: var(--color-surface-elevated);
+  --hero-btn-text: var(--color-text-primary);
+  --hero-btn-text-hover: var(--color-text-primary);
+  --hero-btn-icon: var(--color-primary);
+  --hero-btn-arrow: var(--color-text-muted);
+  --hero-btn-lift: transparent;
+  --hero-focus: var(--color-focus-ring);
+  --hero-focus-halo: transparent;
+}
+
+html[data-hero-fallback="true"] .hero-overlay-inner {
+  min-height: calc(100svh - 10rem);
+  justify-content: center;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+html[data-hero-fallback="true"] .hero-sky-spacer {
+  display: none;
+}
+
+html[data-hero-fallback="true"] .hero-title {
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: var(--color-text-primary);
+  -webkit-text-fill-color: var(--color-text-primary);
+  filter: none;
 }
 
 @media (forced-colors: active) {
@@ -834,9 +864,8 @@ html[data-hero-tint-refresh] .hero-top-tint {
   }
 }
 
-/* Flat backdrop under the canvas: the instant first paint the scene fades in over,
-   and all that shows where the scene can't run. Each world's base colour (the sky
-   behind the title, the night void) keeps the hero text readable. */
+/* Flat first-paint backdrop under the canvas while WebGL warms up. Each world's
+   base colour (the sky behind the title, the night void) keeps the hero text readable. */
 .hero-backdrop {
   background-color: #5b9ee7;
   transition: background-color var(--hero-duration) var(--hero-ease);
@@ -851,8 +880,14 @@ html[data-hero-canvas="live"] .hero-backdrop {
   visibility: hidden;
 }
 
+/* Fallback mode uses the page's own theme canvas instead of the hero layers */
+html[data-hero-fallback="true"] .hero-layer,
+html[data-hero-fallback="true"] .hero-top-tint {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .home-nav,
+  html:not([data-hero-fallback="true"]) .home-nav,
   .hero-overlay,
   .hero-backdrop {
     transition: none;

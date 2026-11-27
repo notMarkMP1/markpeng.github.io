@@ -135,7 +135,7 @@ Keep the visual aesthetic, composition, and wave feel from `0d587a4:app/componen
      * Ripple facets glitter with the stage light's band (`pow(N·H, 80)`).
      * Slopes facing the panel catch a soft rim, plus a gentle fill rim.
      * All use ice-blue/silver highlights (`#8fc2ff` → `#f2faff`) so even dark outer corners respond visibly to cursor wakes.
-3. **Strong, Glassy Interactive Wave Simulation (Desktop Tier):**
+3. **Strong, Glassy Interactive Wave Simulation:**
    * Strictly **square `1:1` world-space FBO** (`22m × 22m`, `512×512` `HalfFloatType`, `LinearFilter`) so ripples expand as true circles in 3D perspective.
    * Fixed-step `60Hz` PDE integration (max 2 substeps/frame) so wave physics feel identical on 60Hz, 120Hz, and 144Hz monitors (`delta ≈ 1.12`, `pressure ≈ 0.990`).
    * **Continuous capsule-segment wake (`sdSegment(uv, prevUv, currUv)`)** scaled strongly (`mouseGain` `0.14–0.62`, plus `0.24` entry ring) so gliding across the water immediately carves bold, glossy wakes—never dotted beads and never buzzing when stationary.
@@ -220,10 +220,10 @@ Never rely solely on `/Mobi|Android|iPhone/i` UA strings! On canvas creation, ex
 2. WebGL2 support (`gl.capabilities.isWebGL2`).
 3. **Live FBO HalfFloat Completeness Probe:** Create a tiny `4×4` `WebGLRenderTarget` with `HalfFloatType` + `LinearFilter`, bind it, and check `rawGl.checkFramebufferStatus(rawGl.FRAMEBUFFER) === rawGl.FRAMEBUFFER_COMPLETE` (also verify `EXT_color_buffer_half_float` / `EXT_color_buffer_float` + `OES_texture_half_float_linear` on WebGL1). Dispose the probe target immediately.
 
-### B. One Production Path, Flat Backdrop Fallback
+### B. One Production Path, Centered Site-Canvas Fallback
 * There are no quality tiers and no URL selectors: every device that runs the hero runs the same scenes with real FBO physics, scaled only by the desktop / phone presets in `capabilities.ts` (constrained phones get the lighter phone preset: 256 water sim, 128 spring field, ~25% lighter planting, no MSAA targets).
-* The scene needs hardware WebGL2 with a verified `HalfFloat` FBO. Without it (no WebGL2, a software renderer, a failed FBO probe or a lost context) the hero keeps its flat CSS backdrop.
-* `HeroBackdrop` is a flat theme colour: the meadow sky behind the title (`#5b9ee7`) in light, the night void (`#07080b`) in dark. It is the instant first paint the canvas fades in over and keeps the white title readable meanwhile. It is hidden (`html[data-hero-canvas="live"]`) once the canvas fully covers it.
+* `HeroBackdrop` is a flat theme colour (`#5b9ee7` in light, `#07080b` in dark) used strictly as the instant first paint that the WebGL canvas fades in over, keeping the sky-styled title readable meanwhile; it is hidden (`html[data-hero-canvas="live"]`) once the canvas covers it.
+* The scene needs hardware WebGL2 with a verified `HalfFloat` FBO. Without it (no WebGL2, a software renderer, a failed FBO probe, or a lost context), `HeroCanvas` stamps `html[data-hero-fallback="true"]`, hiding `.hero-backdrop` and switching `/` to a centered pre-`project-nurture` layout on the standard site canvas (`#fafcf9` Sunlit White / `#090909` Stark Black) with normal `NavBar` tokens, Liner Notes typography, and flat `--color-surface` action buttons.
 * The phone water preset keeps smooth touch-tap and touch-drag ripples (`pointerdown` / `pointermove`, never blocking link taps).
 
 ### C. Light Mode Meadow on Mobile
@@ -240,7 +240,7 @@ Never rely solely on `/Mobi|Android|iPhone/i` UA strings! On canvas creation, ex
 app/components/hero/
 ├── HeroCanvas.tsx          # Single persistent <Canvas>, idle pre-warmer, GPU crossfade compositor, DPR frame-time governor
 ├── HeroOverlay.tsx         # Foreground Liner Notes typography, bio, uniform smooth translucent buttons (no draft dock)
-├── HeroBackdrop.tsx        # Flat theme-colour backdrop: first paint under the canvas, fallback where WebGL2 can't run
+├── HeroBackdrop.tsx        # Flat first-paint backdrop under the canvas while WebGL warms up
 ├── capabilities.ts         # WebGL2 + HalfFloat FBO probe, mobile/reduced-motion detection, desktop/phone quality presets
 ├── compositor.ts           # Horizon-sweep dissolve pass + shared 520ms easing
 ├── framing.ts              # Landscape ↔ portrait camera framing (horizon placement)
@@ -313,4 +313,4 @@ Measured with a CDP harness on both GPUs of a Ryzen 7735HS laptop (RTX 4050 + Ra
 * [ ] **Buttons & NavBar:** `Resume`, `LinkedIn`, and `GitHub` are uniform flat borderless translucent buttons with buttery smooth hover transitions (`200ms ease-out`); `NavBar` preserves the original borderless floating design with no outer capsule or beveled borders, and zero regression on `/about`, `/blog`, `/contact`.
 * [ ] **Light Mode Botanical Realism:** Grass breaks clearly beyond "typical poly grass" (organic clumping, species/wildflower variety, curved normals/SSS, drifting cloud shadows, weighty damp spring physics, calm breeze, rock-steady camera, no foreground stalks stabbing the headline).
 * [ ] **Dark Mode Water Stage:** Matches or exceeds `0d587a4`'s *"stunning"* mirror reflections, with the stage light glowing from behind the text (sky never darker than its reflection), strong continuous cursor wakes, and crisp click-to-splash ripples.
-* [ ] **Mobile & Accessibility:** Verified at `375px`, `390px`, `768px`, `1280px`, `1440px+` (and the flat backdrop where WebGL2 can't run), keyboard focus rings visible on all links/buttons, and `prefers-reduced-motion: reduce` respected cleanly.
+* [ ] **Mobile & Accessibility:** Verified at `375px`, `390px`, `768px`, `1280px`, `1440px+` (and the centered site-canvas fallback where WebGL2 can't run), keyboard focus rings visible on all links/buttons, and `prefers-reduced-motion: reduce` respected cleanly.

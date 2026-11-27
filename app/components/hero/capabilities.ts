@@ -145,7 +145,7 @@ export function probeRenderer(gl: THREE.WebGLRenderer): RendererProbe {
 
 /**
  * Whether the live scene runs here: it needs hardware WebGL2 with half-float render
- * targets for its physics. Anywhere else the hero keeps its flat CSS backdrop.
+ * targets for its physics. Anywhere else the hero switches to the centered fallback layout.
  * Before the context exists (`probe` null) only the API itself is checked.
  */
 export function canRenderHero(env: HeroEnvironment, probe: RendererProbe | null): boolean {

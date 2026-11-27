@@ -1,7 +1,8 @@
 /**
- * Flat theme-coloured backdrop: the instant first paint that the WebGL canvas fades
- * in over, and all that shows where the scene can't run. Pure CSS, theme-driven by
- * html[data-theme], so it renders server-side with zero flash of the wrong world.
+ * Flat theme-coloured first-paint backdrop that the WebGL canvas fades in over.
+ * Pure CSS, theme-driven by html[data-theme], so it renders server-side with zero
+ * flash of the wrong world. Hidden once the live canvas covers it or if the hero
+ * switches to the centered no-WebGL2 fallback layout (html[data-hero-fallback]).
  */
 export default function HeroBackdrop() {
   return (
